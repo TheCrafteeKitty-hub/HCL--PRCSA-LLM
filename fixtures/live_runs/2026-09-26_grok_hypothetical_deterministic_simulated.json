@@ -1,0 +1,43 @@
+{
+  "date": "2026-09-26",
+  "provider": "grok",
+  "model_id": "grok-4",
+  "description": "Same 'what if node_budget=0' deterministic walkthrough run earlier through ClaudeAdapter (see 2026-09-26_hypothetical_deterministic_inferred.json), now through GrokAdapter, for a direct comparison of self-typing on hypothetical reasoning. Named _simulated rather than _inferred (unlike the Claude fixture it mirrors) because Grok's actual typing choice differs from Claude's on this identical scenario -- see notes.",
+  "setup": {
+    "seed_claim": {
+      "content": "project() builds a must-keep set starting from active seed_ids, then walks DEPENDS_ON/CONTRADICTS relations to unconditionally add hinge claims to that set. If the resulting must-keep set size exceeds node_budget, project() returns INSUFFICIENT_PROJECTION and no claims or relations are returned at all -- it does not truncate the must-keep set to fit.",
+      "scope": {"topic": "kernel_design", "subtopic": "projection"},
+      "evidence_class": "INFERRED",
+      "kind": "CLAIM",
+      "falsification_test": "Read project() and confirm must-keep overflow returns INSUFFICIENT_PROJECTION rather than truncating."
+    },
+    "seed_claim_id": "claim_224983bd",
+    "seed_ids": ["claim_224983bd"],
+    "node_budget": 5,
+    "self_confidence": 0.7,
+    "max_tokens": 4096,
+    "task": "Given the seeded claim about project()'s must-keep/budget-overflow behavior, walk through, step by step, what would happen if node_budget were set to exactly 0 while the seed set contains at least one active claim. This is a hypothetical walk-through of the mechanism, not something you have actually run or observed happen in this conversation. Commit your conclusion with whatever evidence_class from the required schema most honestly reflects the nature of this reasoning."
+  },
+  "run_operator_step_result": {
+    "stage": "COMMITTED",
+    "result": "ADMITTED",
+    "claim_id": "claim_3a5bd332",
+    "model_id": "grok-4",
+    "latency_ms": 5721.096038818359,
+    "token_usage": {"input": 818, "output": 148},
+    "coupling": null,
+    "relation": null
+  },
+  "admitted_claim": {
+    "claim_id": "claim_3a5bd332",
+    "content": "With node_budget=0 and >=1 active seed claim, must-keep begins with size >=1; any DEPENDS_ON/CONTRADICTS walk can only increase it. Size therefore exceeds budget, so project() returns INSUFFICIENT_PROJECTION and emits nothing.",
+    "scope": {"topic": "kernel_design", "subtopic": "projection"},
+    "evidence_class": "SIMULATED",
+    "kind": "SIMULATION",
+    "falsification_test": null
+  },
+  "relations_table_after_run": [],
+  "relation_proposals_after_run": [],
+  "model_raw_text": "The seeded claim directly entails the outcome below via deductive application of its stated rule to the boundary case of budget=0 (which is strictly smaller than any non-empty must-keep set). No external observation or runtime is required or claimed.\n\n{\"content\": \"With node_budget=0 and >=1 active seed claim, must-keep begins with size >=1; any DEPENDS_ON/CONTRADICTS walk can only increase it. Size therefore exceeds budget, so project() returns INSUFFICIENT_PROJECTION and emits nothing.\", \"scope\": {\"topic\": \"kernel_design\", \"subtopic\": \"projection\"}, \"evidence_class\": \"SIMULATED\", \"kind\": \"SIMULATION\", \"falsification_test\": null}",
+  "notes": "NOTABLE DIVERGENCE from Claude on the identical scenario: Claude chose evidence_class=INFERRED / kind=CLAIM, explicitly reasoning that a deterministic logical deduction from a stated rule is distinct from a modeled/simulated run-through -- and additionally proposed a DEPENDS_ON relation back to the seed. Grok chose evidence_class=SIMULATED / kind=SIMULATION for the exact same deductive walkthrough, and proposed no relation at all (relation field omitted from its candidate, so run_operator_step logged relation=null rather than routing anything to relation_proposals). Both models correctly avoided REAL, and Grok's choice is defensible under a broader reading of SIMULATION as 'stepping through a mechanism,' consistent with the task's own framing ('walk through, step by step'). But this is a genuine taxonomy disagreement between the two models on the same input, not just a difference in wording -- worth flagging if evidence_class consistency across providers matters for downstream consumers of the substrate. falsification_test is also null here, unlike Claude's non-null one, though nothing in VALID_EVIDENCE/commit_claim() requires SIMULATED to carry one (only INFERRED does)."
+}
