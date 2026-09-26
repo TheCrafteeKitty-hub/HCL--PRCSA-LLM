@@ -21,6 +21,18 @@ class ClaudeAdapter(ModelAdapter):
         self.client = anthropic.Anthropic(api_key=api_key or os.environ.get("ANTHROPIC_API_KEY"))
         self.model = model
 
+    def ping(self) -> str:
+        """Raw connectivity/billing check -- bypasses the PRCSA operator
+        system prompt entirely. generate()'s system prompt forbids plain-text
+        replies (it forces reasoning + a JSON candidate or HOLD), so a smoke
+        test routed through generate() can never get a literal 'PONG' back
+        no matter how healthy the connection is."""
+        resp = self.client.messages.create(
+            model=self.model, max_tokens=10,
+            messages=[{"role": "user", "content": "Reply with exactly the word PONG and nothing else."}],
+        )
+        return next((b.text for b in resp.content if b.type == "text"), "")
+
     def generate(self, request: ModelRequest) -> ModelResponse:
         start = time.time()
         system_prompt = (
@@ -51,7 +63,10 @@ class ClaudeAdapter(ModelAdapter):
             )}],
         )
         latency = (time.time() - start) * 1000
-        raw_text = resp.content[0].text
+        # Claude runs adaptive thinking by default, so content[0] may be a
+        # ThinkingBlock rather than the TextBlock -- scan for the text block
+        # instead of assuming position 0.
+        raw_text = next((b.text for b in resp.content if b.type == "text"), "")
         candidate = _extract_json_candidate(raw_text)
         return ModelResponse(
             raw_text=raw_text, model_id=self.model, latency_ms=latency,
@@ -67,6 +82,15 @@ class GPTAdapter(ModelAdapter):
         import openai
         self.client = openai.OpenAI(api_key=api_key or os.environ.get("OPENAI_API_KEY"))
         self.model = model
+
+    def ping(self) -> str:
+        """Raw connectivity/billing check -- bypasses the PRCSA operator
+        system prompt (see ClaudeAdapter.ping for why that's necessary)."""
+        resp = self.client.chat.completions.create(
+            model=self.model, max_tokens=10,
+            messages=[{"role": "user", "content": "Reply with exactly the word PONG and nothing else."}],
+        )
+        return resp.choices[0].message.content or ""
 
     def generate(self, request: ModelRequest) -> ModelResponse:
         start = time.time()
@@ -115,6 +139,15 @@ class GrokAdapter(ModelAdapter):
             base_url="https://api.x.ai/v1",
         )
         self.model = model
+
+    def ping(self) -> str:
+        """Raw connectivity/billing check -- bypasses the PRCSA operator
+        system prompt (see ClaudeAdapter.ping for why that's necessary)."""
+        resp = self.client.chat.completions.create(
+            model=self.model, max_tokens=10,
+            messages=[{"role": "user", "content": "Reply with exactly the word PONG and nothing else."}],
+        )
+        return resp.choices[0].message.content or ""
 
     def generate(self, request: ModelRequest) -> ModelResponse:
         start = time.time()
@@ -203,12 +236,15 @@ def _extract_json_candidate(raw_text: str):
 def smoke_test(adapter_class, **kwargs):
     """The literal first thing to run once keys exist: reply PONG,
     confirm the key/billing/connection works, before spending anything
-    on a real PRCSA task."""
-    from kernel import ModelRequest
+    on a real PRCSA task. Uses adapter.ping() -- a raw call with no PRCSA
+    operator system prompt -- since generate()'s system prompt forbids
+    plain-text replies and would route this trivial request into HOLD
+    regardless of whether the connection is healthy."""
     adapter = adapter_class(**kwargs)
-    req = ModelRequest(projection={}, task="Reply with exactly the word PONG and nothing else.", max_tokens=10)
-    resp = adapter.generate(req)
-    print(f"[{adapter.name}] raw response: {resp.raw_text!r}")
-    print(f"[{adapter.name}] latency: {resp.latency_ms:.1f}ms  tokens: {resp.token_usage}")
-    return resp.raw_text.strip().upper() == "PONG"
+    start = time.time()
+    raw_text = adapter.ping()
+    latency = (time.time() - start) * 1000
+    print(f"[{adapter.name}] raw response: {raw_text!r}")
+    print(f"[{adapter.name}] latency: {latency:.1f}ms")
+    return raw_text.strip().upper() == "PONG"
       
