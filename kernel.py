@@ -13,6 +13,14 @@ from datetime import datetime, timezone, timedelta
 def now(): return datetime.now(timezone.utc).isoformat()
 def uid(p): return f"{p}_{uuid.uuid4().hex[:8]}"
 
+# INFERRED vs SIMULATED, disambiguated after a live cross-provider taxonomy
+# disagreement on the exact same input (Claude called a node_budget=0
+# walkthrough INFERRED; Grok called the identical deduction SIMULATED):
+# a deterministic, step-by-step trace through an already-known rule or
+# mechanism -- e.g. manually working through code logic to its fixed
+# conclusion -- is INFERRED, not SIMULATED. SIMULATED is reserved for
+# modeling a stochastic or underspecified process forward, where the
+# outcome is not fixed by pure logical necessity from what is already known.
 VALID_EVIDENCE = {"REAL","SIMULATED","PREDICTED","INTERVENTION_DERIVED","INFERRED"}
 VALID_KINDS = {"CLAIM","HYPOTHESIS","PREDICTION","QUESTION","SIMULATION","ACTION_PROPOSAL","INTERPRETATION","UNCERTAINTY","TRANSLATION","HOLD"}
 

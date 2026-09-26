@@ -17,6 +17,15 @@ from kernel import ModelAdapter, ModelRequest, ModelResponse
 # as optional fill). DEPENDS_ON/CONTRADICTS are the structural hinges
 # project() treats as must-keep, so a model's own unverified self-report on
 # one of those is logged for human review instead of written directly.
+EVIDENCE_CLASS_INSTRUCTIONS = (
+    "On evidence_class: a deterministic, step-by-step trace or deduction "
+    "through an already-known rule or mechanism (e.g. manually working "
+    "through code logic to its fixed conclusion) is INFERRED, not SIMULATED. "
+    "Reserve SIMULATED specifically for modeling a stochastic or "
+    "underspecified process forward, where the outcome is not fixed by pure "
+    "logical necessity from what is already known."
+)
+
 RELATION_FIELD_INSTRUCTIONS = (
     'Optionally add a "relation" field if this candidate meaningfully '
     'connects to an existing claim already visible in PROJECTED WORKSPACE: '
@@ -65,6 +74,7 @@ class ClaudeAdapter(ModelAdapter):
             'PREDICTED|INTERVENTION_DERIVED|INFERRED", "kind": "CLAIM|HYPOTHESIS|'
             'PREDICTION|QUESTION|SIMULATION|ACTION_PROPOSAL|INTERPRETATION|'
             'UNCERTAINTY|TRANSLATION|HOLD", "falsification_test": null}\n'
+            f"{EVIDENCE_CLASS_INSTRUCTIONS}\n"
             f"{RELATION_FIELD_INSTRUCTIONS}\n"
             "If you do not have enough support to commit to a claim, respond with "
             '{"kind": "HOLD", "content": "why"} instead -- this is a legitimate, '
@@ -122,6 +132,7 @@ class GPTAdapter(ModelAdapter):
             'PREDICTED|INTERVENTION_DERIVED|INFERRED", "kind": "CLAIM|HYPOTHESIS|'
             'PREDICTION|QUESTION|SIMULATION|ACTION_PROPOSAL|INTERPRETATION|'
             'UNCERTAINTY|TRANSLATION|HOLD", "falsification_test": null}. '
+            f"{EVIDENCE_CLASS_INSTRUCTIONS} "
             f"{RELATION_FIELD_INSTRUCTIONS} "
             "If you do not have enough support to commit to a claim, respond "
             'with {"kind": "HOLD", "content": "why"} instead -- this is a '
@@ -180,6 +191,7 @@ class GrokAdapter(ModelAdapter):
             'PREDICTED|INTERVENTION_DERIVED|INFERRED", "kind": "CLAIM|HYPOTHESIS|'
             'PREDICTION|QUESTION|SIMULATION|ACTION_PROPOSAL|INTERPRETATION|'
             'UNCERTAINTY|TRANSLATION|HOLD", "falsification_test": null}. '
+            f"{EVIDENCE_CLASS_INSTRUCTIONS} "
             f"{RELATION_FIELD_INSTRUCTIONS} "
             "If you do not have enough support to commit to a claim, respond "
             'with {"kind": "HOLD", "content": "why"} instead -- this is a '
