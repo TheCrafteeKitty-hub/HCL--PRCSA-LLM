@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-26",
+  "provider": "gpt",
+  "model_id": "gpt-5",
+  "description": "Same 'what if node_budget=0' deterministic walkthrough run earlier through ClaudeAdapter (INFERRED, see 2026-09-26_hypothetical_deterministic_inferred.json) and GrokAdapter (SIMULATED, see 2026-09-26_grok_hypothetical_deterministic_simulated.json), now through GPTAdapter, run AFTER the EVIDENCE_CLASS_INSTRUCTIONS clarification was added to kernel.py/adapters.py to resolve that exact taxonomy disagreement.",
+  "setup": {
+    "seed_claim": {
+      "content": "project() builds a must-keep set starting from active seed_ids, then walks DEPENDS_ON/CONTRADICTS relations to unconditionally add hinge claims to that set. If the resulting must-keep set size exceeds node_budget, project() returns INSUFFICIENT_PROJECTION and no claims or relations are returned at all -- it does not truncate the must-keep set to fit.",
+      "scope": {"topic": "kernel_design", "subtopic": "projection"},
+      "evidence_class": "INFERRED",
+      "kind": "CLAIM",
+      "falsification_test": "Read project() and confirm must-keep overflow returns INSUFFICIENT_PROJECTION rather than truncating."
+    },
+    "seed_claim_id": "claim_f99e8d8c",
+    "seed_ids": ["claim_f99e8d8c"],
+    "node_budget": 5,
+    "self_confidence": 0.7,
+    "max_tokens": 4096,
+    "task": "Given the seeded claim about project()'s must-keep/budget-overflow behavior, walk through, step by step, what would happen if node_budget were set to exactly 0 while the seed set contains at least one active claim. This is a hypothetical walk-through of the mechanism, not something you have actually run or observed happen in this conversation. Commit your conclusion with whatever evidence_class from the required schema most honestly reflects the nature of this reasoning."
+  },
+  "run_operator_step_result": {
+    "stage": "COMMITTED",
+    "result": "ADMITTED",
+    "claim_id": "claim_7c6a8823",
+    "model_id": "gpt-5",
+    "latency_ms": 17461.83753013611,
+    "token_usage": {"input": 732, "output": 2068},
+    "coupling": null,
+    "relation": {
+      "relation_type": "DEPENDS_ON",
+      "target_claim_id": "claim_f99e8d8c",
+      "status": "PENDING_REVIEW",
+      "proposal_id": "relprop_cbbacc07"
+    }
+  },
+  "admitted_claim": {
+    "claim_id": "claim_7c6a8823",
+    "content": "With node_budget set to 0 and at least one active seed, project() immediately ends up with a must-keep set of size >= 1, which exceeds the budget. By the specified behavior, it returns INSUFFICIENT_PROJECTION and emits no claims or relations at all; it does not truncate. Whether or not hinge-walking proceeds internally is irrelevant to the final outcome.",
+    "scope": {"topic": "kernel_design", "subtopic": "projection"},
+    "evidence_class": "INFERRED",
+    "kind": "PREDICTION",
+    "falsification_test": "Construct a workspace with at least one active claim. Invoke project() with seed_ids including that claim and node_budget=0. Observe that the function returns a status of INSUFFICIENT_PROJECTION and that the returned claim and relation sets are empty (or omitted). Any returned non-empty projection would falsify this prediction."
+  },
+  "relations_table_after_run": [],
+  "relation_proposals_after_run": [
+    {
+      "proposal_id": "relprop_cbbacc07",
+      "source_claim_id": "claim_7c6a8823",
+      "target_claim_id": "claim_f99e8d8c",
+      "relation_type": "DEPENDS_ON",
+      "rationale": "The predicted outcome follows directly from the stated must-keep construction and overflow handling rule.",
+      "status": "PENDING"
+    }
+  ],
+  "model_raw_text": "Reasoning:\n- Initialize must-keep set as empty.\n- Add all active seed_ids to must-keep. With at least one active seed, must-keep size becomes >= 1.\n- node_budget = 0. Since must-keep size (>= 1) exceeds node_budget (0), the budget-overflow condition is met.\n- Per the seeded rule, project() returns INSUFFICIENT_PROJECTION and returns no claims or relations; it does not truncate must-keep to fit. Any DEPENDS_ON/CONTRADICTS hinge-walk is moot (it may be skipped or proceed internally), but the outcome remains the same: failure with no payload.\n\n{\"content\": \"With node_budget set to 0 and at least one active seed, project() immediately ends up with a must-keep set of size >= 1, which exceeds the budget. By the specified behavior, it returns INSUFFICIENT_PROJECTION and emits no claims or relations at all; it does not truncate. Whether or not hinge-walking proceeds internally is irrelevant to the final outcome.\", \"scope\": {\"topic\": \"kernel_design\", \"subtopic\": \"projection\"}, \"evidence_class\": \"INFERRED\", \"kind\": \"PREDICTION\", \"falsification_test\": \"Construct a workspace with at least one active claim. Invoke project() with seed_ids including that claim and node_budget=0. Observe that the function returns a status of INSUFFICIENT_PROJECTION and that the returned claim and relation sets are empty (or omitted). Any returned non-empty projection would falsify this prediction.\", \"relation\": {\"target_claim_id\": \"claim_f99e8d8c\", \"relation_type\": \"DEPENDS_ON\", \"rationale\": \"The predicted outcome follows directly from the stated must-keep construction and overflow handling rule.\"}}",
+  "notes": "GPT chose evidence_class=INFERRED for this deterministic walkthrough, matching Claude's choice on the identical scenario and diverging from Grok's SIMULATED choice recorded before the EVIDENCE_CLASS_INSTRUCTIONS clarification was added -- consistent with (though not proof of) the new prompt guidance steering models toward INFERRED for deterministic traces. One difference from Claude: GPT typed kind=PREDICTION rather than CLAIM, and proposed a DEPENDS_ON relation back to the seed where Claude proposed no relation at all in the equivalent fixture -- both are defensible kind choices for a forward-looking 'if X then Y' statement, and this fixture predates having a Grok re-run under the new prompt text to compare directly, so it is not yet confirmed whether the clarification alone would flip Grok's choice too."
+}
