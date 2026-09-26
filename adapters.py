@@ -116,9 +116,15 @@ class GPTAdapter(ModelAdapter):
 
     def ping(self) -> str:
         """Raw connectivity/billing check -- bypasses the PRCSA operator
-        system prompt (see ClaudeAdapter.ping for why that's necessary)."""
+        system prompt (see ClaudeAdapter.ping for why that's necessary).
+        gpt-5 is a reasoning model: its (invisible) reasoning tokens are
+        billed against max_completion_tokens same as the visible reply, so
+        a budget of 10 gets consumed entirely by reasoning and returns an
+        empty completion with finish_reason=length. Found live -- 10
+        reliably starved the reply to nothing; 256 leaves enough headroom
+        for reasoning plus the one-word reply."""
         resp = self.client.chat.completions.create(
-            model=self.model, max_tokens=10,
+            model=self.model, max_completion_tokens=256,
             messages=[{"role": "user", "content": "Reply with exactly the word PONG and nothing else."}],
         )
         return resp.choices[0].message.content or ""
@@ -143,7 +149,7 @@ class GPTAdapter(ModelAdapter):
         )
         resp = self.client.chat.completions.create(
             model=self.model,
-            max_tokens=request.max_tokens,
+            max_completion_tokens=request.max_tokens,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": (
