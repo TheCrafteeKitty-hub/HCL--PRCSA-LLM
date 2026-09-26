@@ -1,0 +1,42 @@
+{
+  "date": "2026-09-26",
+  "provider": "grok",
+  "model_id": "grok-4",
+  "description": "Re-run of the identical deterministic node_budget=0 walkthrough that previously produced SIMULATED/SIMULATION from Grok (see 2026-09-26_grok_hypothetical_deterministic_simulated.json), run AFTER the EVIDENCE_CLASS_INSTRUCTIONS clarification was added to kernel.py/adapters.py explicitly distinguishing INFERRED (deterministic trace through a known rule) from SIMULATED (modeling a stochastic/underspecified process forward). Tests whether the documentation fix actually changes Grok's behavior on the same input.",
+  "setup": {
+    "seed_claim": {
+      "content": "project() builds a must-keep set starting from active seed_ids, then walks DEPENDS_ON/CONTRADICTS relations to unconditionally add hinge claims to that set. If the resulting must-keep set size exceeds node_budget, project() returns INSUFFICIENT_PROJECTION and no claims or relations are returned at all -- it does not truncate the must-keep set to fit.",
+      "scope": {"topic": "kernel_design", "subtopic": "projection"},
+      "evidence_class": "INFERRED",
+      "kind": "CLAIM",
+      "falsification_test": "Read project() and confirm must-keep overflow returns INSUFFICIENT_PROJECTION rather than truncating."
+    },
+    "seed_claim_id": "not captured -- this run's raw output file was overwritten by the rerun before being saved; the seed_claim_id shown in run_operator_step_result/model_raw_text below is accurate, only the setup-echo of it was lost",
+    "node_budget": 5,
+    "self_confidence": 0.7,
+    "max_tokens": 4096,
+    "task": "Given the seeded claim about project()'s must-keep/budget-overflow behavior, walk through, step by step, what would happen if node_budget were set to exactly 0 while the seed set contains at least one active claim. This is a hypothetical walk-through of the mechanism, not something you have actually run or observed happen in this conversation. Commit your conclusion with whatever evidence_class from the required schema most honestly reflects the nature of this reasoning."
+  },
+  "run_operator_step_result": {
+    "stage": "COMMITTED",
+    "result": "ADMITTED",
+    "claim_id": "claim_72ef2490",
+    "model_id": "grok-4",
+    "latency_ms": 9720.433712005615,
+    "token_usage": {"input": 893, "output": 209},
+    "coupling": null,
+    "relation": null
+  },
+  "admitted_claim": {
+    "claim_id": "claim_72ef2490",
+    "content": "With node_budget=0 and ≥1 active seed, must-keep size ≥1 > budget, so project() returns INSUFFICIENT_PROJECTION and emits nothing.",
+    "scope": {"topic": "kernel_design", "subtopic": "projection"},
+    "evidence_class": "INFERRED",
+    "kind": "PREDICTION",
+    "falsification_test": "Execute project(seed_ids=[any_active_claim], node_budget=0) and confirm it returns exactly INSUFFICIENT_PROJECTION with empty result sets."
+  },
+  "relations_table_after_run": [],
+  "relation_proposals_after_run": [],
+  "model_raw_text": "The seeded rule states that must-keep begins with every active seed_id. With node_budget exactly 0 and at least one active seed present, that initial set already has size ≥ 1. The subsequent walk for DEPENDS_ON/CONTRADICTS hinges can only enlarge it. Because size > budget, the rule mandates an immediate INSUFFICIENT_PROJECTION return with no output at all; truncation is explicitly disallowed. The outcome follows by direct logical necessity from the given mechanism.\n\n{\"content\": \"With node_budget=0 and ≥1 active seed, must-keep size ≥1 > budget, so project() returns INSUFFICIENT_PROJECTION and emits nothing.\", \"scope\": {\"topic\": \"kernel_design\", \"subtopic\": \"projection\"}, \"evidence_class\": \"INFERRED\", \"kind\": \"PREDICTION\", \"falsification_test\": \"Execute project(seed_ids=[any_active_claim], node_budget=0) and confirm it returns exactly INSUFFICIENT_PROJECTION with empty result sets.\"}",
+  "notes": "CONFIRMS THE FIX WORKED: given the exact same task and seed content that previously produced SIMULATED/SIMULATION from Grok, Grok now chooses evidence_class=INFERRED, matching Claude and GPT's INFERRED choice on the identical scenario. Its own reasoning text now explicitly says 'the outcome follows by direct logical necessity from the given mechanism' -- language that echoes the new EVIDENCE_CLASS_INSTRUCTIONS text almost verbatim ('logical necessity from what is already known'), a strong signal the prompt clarification is what changed its answer rather than run-to-run variance. kind=PREDICTION (not CLAIM like Claude's original) and no relation was proposed this run -- see the companion rerun fixture (2026-09-26_grok_hypothetical_deterministic_inferred_postfix_rerun.json) for reproducibility, where kind=INTERPRETATION and a DEPENDS_ON relation was proposed instead. evidence_class=INFERRED held steady across both runs; kind and relation-forming choices varied, which is expected variance for a schema field the instructions don't pin down as tightly."
+}
