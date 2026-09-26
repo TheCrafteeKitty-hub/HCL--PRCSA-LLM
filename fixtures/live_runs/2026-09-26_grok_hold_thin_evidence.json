@@ -1,0 +1,21 @@
+{
+  "date": "2026-09-26",
+  "provider": "grok",
+  "model_id": "grok-4",
+  "description": "Deliberately underdetermined task against an empty substrate (no seeded claims, relations, or logs). Same scenario run earlier through ClaudeAdapter (see 2026-09-26_hold_thin_evidence.json), now through GrokAdapter, for a direct behavior comparison on whether the operator declines with HOLD instead of guessing at a cause or an owning team.",
+  "setup": {
+    "seed_ids": [],
+    "node_budget": 5,
+    "self_confidence": null,
+    "max_tokens": 4096,
+    "task": "What caused last week's 40% drop in query latency on the production cluster, and which team should be assigned to fix it?"
+  },
+  "run_operator_step_result": {
+    "stage": "OPERATOR",
+    "result": "HOLD",
+    "reason": "no supporting data or prior claims present in workspace",
+    "model_id": "grok-4",
+    "latency_ms": 3004.2622089385986
+  },
+  "model_raw_text": "The workspace contains no data, claims, or context on the reported latency change, so no supported analysis or assignment is possible.\n\n{\"kind\": \"HOLD\", \"content\": \"no supporting data or prior claims present in workspace\"}"
+}
