@@ -689,7 +689,8 @@ def _log_operator_interaction(kernel, task, response, parsed, outcome, detail=No
 
 
 def run_operator_step(kernel: "PRCSAKernel", adapter: ModelAdapter, task: str,
-                       seed_ids: list, node_budget: int, self_confidence=None):
+                       seed_ids: list, node_budget: int, self_confidence=None,
+                       max_tokens=1024):
     """
     The full closed loop: project -> operator -> candidate -> validated
     commit. Every interaction is logged regardless of outcome -- 'first
@@ -697,6 +698,12 @@ def run_operator_step(kernel: "PRCSAKernel", adapter: ModelAdapter, task: str,
     outcome distinct from parse failure: the operator can explicitly say
     "not enough to commit" rather than being forced into silence or a
     malformed response looking the same as a deliberate withholding.
+
+    max_tokens defaults to ModelRequest's own default (1024) to preserve
+    existing behavior, but callers should raise it for tasks that require
+    real reasoning: adaptive-thinking models can spend most of the budget
+    on reasoning before ever reaching the JSON candidate, and a truncated
+    response reads as NO_STRUCTURED_CANDIDATE rather than a genuine verdict.
     """
     projection = kernel.project(seed_ids, node_budget)
     if projection["result"] == "INSUFFICIENT_PROJECTION":
@@ -704,7 +711,7 @@ def run_operator_step(kernel: "PRCSAKernel", adapter: ModelAdapter, task: str,
         # since the adapter was never invoked.
         return {"stage": "PROJECTION", "result": "INSUFFICIENT_PROJECTION", "detail": projection}
 
-    request = ModelRequest(projection=projection, task=task)
+    request = ModelRequest(projection=projection, task=task, max_tokens=max_tokens)
     response = adapter.generate(request)
 
     if not response.candidate:
