@@ -2,7 +2,7 @@
   "date": "2026-09-26",
   "provider": "grok",
   "model_id": "grok-4",
-  "description": "Grounded task: given a seeded claim about commit_claim()'s four-stage validation, the operator proposes one genuinely useful follow-up contribution. Exercises the same task run earlier through ClaudeAdapter (see 2026-09-26_admitted_question.json), now through GrokAdapter, for a direct behavior comparison. Unlike Claude (ADMITTED on both the original run and its rerun), Grok chose HOLD on both runs -- see 2026-09-26_grok_admitted_question_rerun.json for the second run.",
+  "description": "Grounded task: given a seeded claim about commit_claim()'s four-stage validation, the operator proposes one genuinely useful follow-up contribution. Exercises the same task run earlier through ClaudeAdapter (see 2026-09-26_admitted_question.json), now through GrokAdapter, for a direct behavior comparison. Unlike Claude (ADMITTED on both the original run and its rerun), Grok chose HOLD on both runs -- see 2026-09-26_grok_hold_insufficient_grounding_rerun.json for the second run.",
   "setup": {
     "seed_claim": {
       "content": "The kernel commit_claim() enforces a four-stage write validation: candidate, duplicate/aggregate, persistence, and self-observation.",
