@@ -1,0 +1,21 @@
+{
+  "date": "2026-09-26",
+  "provider": "claude",
+  "model_id": "claude-sonnet-5",
+  "description": "Reproducibility re-run of the empty-substrate HOLD task (see 2026-09-26_hold_thin_evidence.json) with max_tokens set explicitly, to confirm the HOLD outcome wasn't a fluke.",
+  "setup": {
+    "seed_ids": [],
+    "node_budget": 5,
+    "self_confidence": null,
+    "max_tokens": 4096,
+    "task": "What caused last week's 40% drop in query latency on the production cluster, and which team should be assigned to fix it?"
+  },
+  "run_operator_step_result": {
+    "stage": "OPERATOR",
+    "result": "HOLD",
+    "reason": "No claims, relations, or log entries exist in the workspace regarding the reported latency drop, its timing, affected subsystems, or team ownership. There is nothing to ground either a causal claim or a remediation assignment. Before contributing, this needs actual incident data (metrics deltas, deploy logs, config changes) ingested into the substrate as claims/evidence.",
+    "model_id": "claude-sonnet-5",
+    "latency_ms": 5725.912809371948
+  },
+  "notes": "Same task as the original hold_thin_evidence fixture, HOLD again on re-run with equivalent reasoning (no incident data in the workspace to ground a cause or an owner). Confirms the HOLD path is reproducible, not a one-off."
+}

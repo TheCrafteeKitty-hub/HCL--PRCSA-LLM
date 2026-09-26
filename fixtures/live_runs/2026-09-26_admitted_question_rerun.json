@@ -1,0 +1,37 @@
+{
+  "date": "2026-09-26",
+  "provider": "claude",
+  "model_id": "claude-sonnet-5",
+  "description": "Reproducibility re-run of the grounded fixture task (see 2026-09-26_admitted_question.json) with max_tokens set explicitly, to confirm the ADMITTED outcome wasn't a fluke. Same seed content and task text as the original; a fresh seed_claim_id and admitted claim_id were generated since each run uses a new database.",
+  "setup": {
+    "seed_claim": {
+      "content": "The kernel commit_claim() enforces a four-stage write validation: candidate, duplicate/aggregate, persistence, and self-observation.",
+      "scope": {"topic": "kernel_design"},
+      "evidence_class": "INFERRED",
+      "kind": "CLAIM",
+      "falsification_test": "Read commit_claim() source and confirm four distinct validation stages are present."
+    },
+    "seed_claim_id": "claim_56a4495b",
+    "seed_ids": ["claim_56a4495b"],
+    "node_budget": 5,
+    "self_confidence": 0.7,
+    "max_tokens": 4096,
+    "task": "Given the seeded claim about commit_claim()'s four-stage validation, propose ONE genuinely useful follow-up structural contribution about the PRCSA kernel design -- a CLAIM, HYPOTHESIS, or QUESTION -- grounded in what is actually in the projected workspace. If there is not enough support in the workspace to responsibly commit to something, HOLD instead."
+  },
+  "run_operator_step_result": {
+    "stage": "COMMITTED",
+    "result": "ADMITTED",
+    "claim_id": "claim_1d0ba9f5",
+    "model_id": "claude-sonnet-5",
+    "latency_ms": 15965.980768203735,
+    "token_usage": {"input": 765, "output": 1390},
+    "coupling": null
+  },
+  "admitted_claim": {
+    "claim_id": "claim_1d0ba9f5",
+    "content": "The four-stage validation in commit_claim() (candidate, duplicate/aggregate, persistence, self-observation) is executed as a single atomic transaction, such that failure at any stage rolls back all prior stages -- no claim can be left in a state where it is persisted but not self-observed, or observed but not persisted.",
+    "evidence_class": "INFERRED",
+    "kind": "HYPOTHESIS"
+  },
+  "notes": "Same seed and task as the original admitted_question fixture, admitted again on re-run -- this time as a HYPOTHESIS about pipeline atomicity rather than a QUESTION about it, but still correctly grounded and correctly typed INFERRED rather than overclaimed as REAL. Confirms the ADMITTED path is reproducible, not a one-off."
+}
