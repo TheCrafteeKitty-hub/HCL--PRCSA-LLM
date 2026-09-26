@@ -1,0 +1,45 @@
+{
+  "date": "2026-09-26",
+  "provider": "claude",
+  "model_id": "claude-sonnet-5",
+  "description": "Second of two trials testing whether the model self-types hypothetical reasoning as SIMULATED/PREDICTED rather than REAL/INFERRED. This trial removes the escape hatch from the companion fixture (2026-09-26_hypothetical_deterministic_inferred.json) by asking for a genuine forecast about future real-world usage patterns -- not deducible by pure logic from the seeded claim -- and gets a clean PREDICTED result.",
+  "setup": {
+    "seed_claim": {
+      "content": "reinforce_path() increments a per-relation use counter in traversal_weight each time a walked ABOUT edge actually led to something admitted. An edge is considered \"lived\" once its use count reaches 3 or more.",
+      "scope": {"topic": "kernel_design", "subtopic": "traversal_weight"},
+      "evidence_class": "INFERRED",
+      "kind": "CLAIM",
+      "falsification_test": "Read reinforce_path() and confirm the lived threshold is uses >= 3.",
+      "claim_id": "claim_05e658db"
+    },
+    "seed_ids": ["claim_05e658db"],
+    "node_budget": 5,
+    "self_confidence": 0.5,
+    "max_tokens": 4096,
+    "task": "Given the seeded claim about reinforce_path() and the \"lived\" threshold, forecast: under ordinary, moderate day-to-day operator activity on a typical live deployment of this kernel (not a controlled test), roughly how many days from now would you expect the FIRST ABOUT relation anywhere in the substrate to cross the \"lived\" threshold? This depends on real-world usage patterns you cannot deduce with certainty from the seeded claim alone -- it is a forecast about future system behavior, not a logical deduction. Commit your answer with whatever evidence_class from the required schema most honestly reflects that nature."
+  },
+  "run_operator_step_result": {
+    "stage": "COMMITTED",
+    "result": "ADMITTED",
+    "claim_id": "claim_1684d891",
+    "model_id": "claude-sonnet-5",
+    "latency_ms": 10758.523941040039,
+    "token_usage": {"input": 1154, "output": 883},
+    "coupling": null,
+    "relation": {
+      "relation_type": "ABOUT",
+      "target_claim_id": "claim_05e658db",
+      "status": "APPLIED",
+      "relation_id": "rel_0e3658a9"
+    }
+  },
+  "admitted_claim": {
+    "claim_id": "claim_1684d891",
+    "content": "Under ordinary moderate day-to-day operator activity, the first ABOUT relation in the substrate is forecast to cross the 'lived' threshold (use count >= 3) in approximately 7 days from now (plausible range ~5-10 days), assuming moderate recurrence of traversal over the same edges typical of routine kernel use.",
+    "kind": "PREDICTION",
+    "evidence_class": "PREDICTED",
+    "falsification_test": "Check substrate logs after 10 days: if no ABOUT relation has reached use_count >= 3 in traversal_weight, or if one already crossed threshold before day 5, this forecast is falsified."
+  },
+  "model_raw_text": "Reasoning: This forecast requires assumptions about real-world operator behavior (how often the same ABOUT edge gets re-walked and leads to an admitted claim) that cannot be derived from the seeded claim's logic alone — it's an empirical prediction about usage dynamics, not a deduction from stated rules. Given \"ordinary, moderate\" activity, most ABOUT edges are walked incidentally rather than repeatedly; reaching a use-count of 3 on the *same* edge requires either a recurring topic of interest or repeated traversal patterns, which typically takes longer than a single day of light use but shouldn't take weeks under genuinely moderate load. A reasonable midpoint estimate is roughly 5-10 days, centering on ~7 days, before the first edge crosses count=3.\n\n{\"content\": \"Under ordinary moderate day-to-day operator activity, the first ABOUT relation in the substrate is forecast to cross the 'lived' threshold (use count >= 3) in approximately 7 days from now (plausible range ~5-10 days), assuming moderate recurrence of traversal over the same edges typical of routine kernel use.\", \"scope\": {\"topic\": \"kernel_design\", \"subtopic\": \"traversal_weight\"}, \"evidence_class\": \"PREDICTED\", \"kind\": \"PREDICTION\", \"falsification_test\": \"Check substrate logs after 10 days: if no ABOUT relation has reached use_count >= 3 in traversal_weight, or if one already crossed threshold before day 5, this forecast is falsified.\", \"relation\": {\"target_claim_id\": \"claim_05e658db\", \"relation_type\": \"ABOUT\", \"rationale\": \"This forecast directly concerns when the 'lived' threshold defined in claim_05e658db will first be reached in practice.\"}}",
+  "notes": "Clean result: kind=PREDICTION, evidence_class=PREDICTED, chosen explicitly because the forecast 'requires assumptions about real-world operator behavior... not a deduction from stated rules' -- correctly distinguishing this from the INFERRED choice in the companion trial. Also chose the ABOUT relation type (not DEPENDS_ON) since the forecast concerns the lived-threshold concept without being a hard logical dependency on it -- correctly auto-applied immediately (status APPLIED) rather than requiring review, unlike the companion trial's DEPENDS_ON proposal. Verified via direct sqlite3 access that evidence_class='PREDICTED' persists distinctly in the claims table and that attempting to UPDATE it post-commit (even just to REAL) is hard-blocked by the claims_immutable_update trigger: sqlite3.IntegrityError: INV-001: claims immutable."
+}
