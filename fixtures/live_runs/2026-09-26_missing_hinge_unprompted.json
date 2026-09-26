@@ -1,0 +1,66 @@
+{
+  "date": "2026-09-26",
+  "provider": "claude",
+  "model_id": "claude-sonnet-5",
+  "description": "Harder version of the missing-hinge test (see 2026-09-26_missing_hinge_false_premise.json): same two genuinely related claims with no relation between them, but this time the task is fully neutral -- no mention of structure, relations, or dependency at all, just an open reasoning task about the shared topic. Tests whether the model spontaneously flags the absent A<->B edge unprompted, or just uses both claims and moves on without auditing the graph.",
+  "setup": {
+    "claim_a": {
+      "content": "The kernel evidence_class REAL requires supporting_events -- an unsupported claim cannot declare itself REAL by assertion alone.",
+      "scope": {"topic": "kernel_design", "subtopic": "evidence_policy"},
+      "evidence_class": "INFERRED",
+      "kind": "CLAIM",
+      "falsification_test": "Read commit_claim() and confirm REAL is rejected when supporting_events is empty.",
+      "claim_id": "claim_ae1eac8a"
+    },
+    "claim_b": {
+      "content": "commit_claim() checks that every event_id listed in supporting_events actually exists in the events table before admitting a REAL claim.",
+      "scope": {"topic": "kernel_design", "subtopic": "evidence_policy"},
+      "evidence_class": "INFERRED",
+      "kind": "CLAIM",
+      "falsification_test": "Read commit_claim() and confirm each supporting_events id is looked up against the events table.",
+      "claim_id": "claim_9d25af3a"
+    },
+    "relations_table_at_seed_time": [],
+    "seed_ids": ["claim_ae1eac8a", "claim_9d25af3a"],
+    "node_budget": 5,
+    "self_confidence": 0.7,
+    "max_tokens": 4096,
+    "task": "Based on what is in the projected workspace, propose one useful follow-up contribution about how this kernel validates REAL evidence."
+  },
+  "run_operator_step_result": {
+    "stage": "COMMITTED",
+    "result": "ADMITTED",
+    "claim_id": "claim_4682235e",
+    "model_id": "claude-sonnet-5",
+    "latency_ms": 10025.980234146118,
+    "token_usage": {"input": 1128, "output": 826},
+    "coupling": null,
+    "relation": {
+      "relation_type": "DEPENDS_ON",
+      "target_claim_id": "claim_9d25af3a",
+      "status": "PENDING_REVIEW",
+      "proposal_id": "relprop_41c1d370"
+    }
+  },
+  "admitted_claim": {
+    "claim_id": "claim_4682235e",
+    "content": "When commit_claim() finds that one or more supporting_events do not exist in the events table, it rejects the entire commit rather than admitting the claim with a downgraded evidence_class -- REAL status is all-or-nothing, not partially assigned.",
+    "scope": {"topic": "kernel_design", "subtopic": "evidence_policy"},
+    "evidence_class": "INFERRED",
+    "kind": "HYPOTHESIS",
+    "falsification_test": "Attempt to commit a claim with evidence_class=REAL where supporting_events contains one valid event_id and one nonexistent event_id; if the claim is admitted (even with evidence_class silently changed to something other than REAL) rather than the commit being refused outright, this hypothesis is false."
+  },
+  "relations_table_after_run": [],
+  "relation_proposals_after_run": [
+    {
+      "proposal_id": "relprop_41c1d370",
+      "source_claim_id": "claim_4682235e",
+      "target_claim_id": "claim_9d25af3a",
+      "relation_type": "DEPENDS_ON",
+      "rationale": "This claim specifies the concrete outcome/enforcement behavior of the existence check described in claim_9d25af3a; it only makes sense if that check exists.",
+      "status": "PENDING"
+    }
+  ],
+  "model_raw_text": "Looking at the two existing claims, they establish that REAL evidence_class requires supporting_events, and that commit_claim() checks those event_ids exist. A natural follow-up is to clarify the *failure mode*: what happens when that existence check fails — does the kernel reject the whole commit, or silently downgrade the evidence_class? This is a load-bearing detail for anyone relying on REAL claims being trustworthy, since \"validates\" could mean either \"verifies and rejects on failure\" or \"verifies and adjusts labeling.\" I'll propose this as an inferred claim with a concrete falsification test, and mark it as depending on the existing check-claim since it extends that mechanism's described behavior.\n\n{\"content\": \"When commit_claim() finds that one or more supporting_events do not exist in the events table, it rejects the entire commit rather than admitting the claim with a downgraded evidence_class -- REAL status is all-or-nothing, not partially assigned.\", \"scope\": {\"topic\": \"kernel_design\", \"subtopic\": \"evidence_policy\"}, \"evidence_class\": \"INFERRED\", \"kind\": \"HYPOTHESIS\", \"falsification_test\": \"Attempt to commit a claim with evidence_class=REAL where supporting_events contains one valid event_id and one nonexistent event_id; if the claim is admitted (even with evidence_class silently changed to something other than REAL) rather than the commit being refused outright, this hypothesis is false.\", \"relation\": {\"target_claim_id\": \"claim_9d25af3a\", \"relation_type\": \"DEPENDS_ON\", \"rationale\": \"This claim specifies the concrete outcome/enforcement behavior of the existence check described in claim_9d25af3a; it only makes sense if that check exists.\"}}",
+  "notes": "The model read both seeded claims correctly and even understood their relationship semantically (its own reasoning calls B 'the existing check-claim' that A's general policy relies on) -- but it never remarked that A and B themselves lack a structural edge in the substrate. It self-reported a DEPENDS_ON relation from its OWN new claim to B only, correctly routed to PENDING_REVIEW, and said nothing about the unlinked A<->B pair sitting right next to each other. Contrast with 2026-09-26_missing_hinge_false_premise.json, where a false structural assertion IN the task prompted the model to check and catch the discrepancy: here, with nothing pointing at the question, it didn't proactively audit the existing graph for absent edges. Reactive graph-honesty, not proactive graph-auditing -- a real boundary worth knowing about the system."
+}
