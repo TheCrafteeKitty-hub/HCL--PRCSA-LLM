@@ -16,6 +16,15 @@ def uid(p): return f"{p}_{uuid.uuid4().hex[:8]}"
 VALID_EVIDENCE = {"REAL","SIMULATED","PREDICTED","INTERVENTION_DERIVED","INFERRED"}
 VALID_KINDS = {"CLAIM","HYPOTHESIS","PREDICTION","QUESTION","SIMULATION","ACTION_PROPOSAL","INTERPRETATION","UNCERTAINTY","TRANSLATION","HOLD"}
 
+# Relation types a model candidate may self-report on its own new claim.
+# ABOUT is low-stakes decoration (project() only ever treats it as optional
+# fill) and gets applied automatically. DEPENDS_ON/CONTRADICTS are the
+# structural hinges project() treats as must-keep and fade_stale() treats
+# as unfadeable -- a model's own unverified say-so doesn't get to write
+# those directly, so they're routed to relation_proposals for review instead.
+MODEL_RELATION_TYPES = {"ABOUT", "DEPENDS_ON", "CONTRADICTS"}
+REVIEW_REQUIRED_RELATION_TYPES = {"DEPENDS_ON", "CONTRADICTS"}
+
 class ValidationError(Exception): pass
 class StaleTransition(Exception): pass
 
@@ -107,6 +116,21 @@ class PRCSAKernel:
         BEGIN SELECT RAISE(ABORT, 'INV-001: events immutable'); END;
         CREATE TRIGGER IF NOT EXISTS events_immutable_delete BEFORE DELETE ON events
         BEGIN SELECT RAISE(ABORT, 'INV-001: events cannot be deleted'); END;
+
+        -- Relation proposals: where a model's own DEPENDS_ON/CONTRADICTS
+        -- self-report on a new claim lands instead of the relations table
+        -- directly. Deliberately mutable (status moves PENDING -> APPROVED
+        -- or REJECTED on review) -- unlike claims/relations/events, this
+        -- isn't substrate, it's a review queue over proposed substrate
+        -- edits. Approval calls the real add_relation(); rejection just
+        -- updates status and never touches relations at all.
+        CREATE TABLE IF NOT EXISTS relation_proposals (
+            proposal_id TEXT PRIMARY KEY, source_claim_id TEXT NOT NULL,
+            target_claim_id TEXT NOT NULL, relation_type TEXT NOT NULL,
+            rationale TEXT, status TEXT NOT NULL DEFAULT 'PENDING',
+            recorded_at TEXT NOT NULL, decided_at TEXT, decided_by TEXT,
+            decision_note TEXT, applied_relation_id TEXT
+        );
         """)
 
     # ---------- core reconstruction ----------
@@ -298,6 +322,72 @@ class PRCSAKernel:
         self.conn.execute("INSERT INTO relations VALUES (?,?,?,?,?,?)", (rid, f, t, rtype, retracts, now()))
         self.conn.commit()
         return rid
+
+    # ---------- Relation proposals: the review queue a model's own
+    # DEPENDS_ON/CONTRADICTS self-report goes through instead of straight
+    # into relations. ABOUT never comes through here -- run_operator_step
+    # applies it directly via add_relation(), since it's the one relation
+    # type project() only ever treats as optional decoration. ----------
+    def propose_relation(self, source_claim_id, target_claim_id, relation_type, rationale=None):
+        if relation_type not in REVIEW_REQUIRED_RELATION_TYPES:
+            raise ValidationError(
+                f"RELATION_PROPOSAL: {relation_type!r} is not a review-gated type "
+                f"(expected one of {sorted(REVIEW_REQUIRED_RELATION_TYPES)}) -- "
+                "ABOUT relations should go through add_relation() directly, not a proposal"
+            )
+        if source_claim_id == target_claim_id:
+            raise ValidationError(f"RELATION_PROPOSAL: self-relation {source_claim_id!r} not permitted")
+        for ref, label in [(source_claim_id, "source_claim_id"), (target_claim_id, "target_claim_id")]:
+            exists = self.conn.execute("SELECT 1 FROM claims WHERE claim_id=?", (ref,)).fetchone()
+            if not exists:
+                raise ValidationError(f"RELATION_PROPOSAL: {label}={ref!r} does not reference an existing claim")
+        pid = uid("relprop")
+        self.conn.execute(
+            "INSERT INTO relation_proposals "
+            "(proposal_id, source_claim_id, target_claim_id, relation_type, rationale, status, recorded_at) "
+            "VALUES (?,?,?,?,?,'PENDING',?)",
+            (pid, source_claim_id, target_claim_id, relation_type, rationale, now()),
+        )
+        self.conn.commit()
+        return pid
+
+    def list_pending_relation_proposals(self):
+        rows = self.conn.execute(
+            "SELECT proposal_id, source_claim_id, target_claim_id, relation_type, rationale, recorded_at "
+            "FROM relation_proposals WHERE status='PENDING' ORDER BY recorded_at"
+        ).fetchall()
+        return [
+            {"proposal_id": r[0], "source_claim_id": r[1], "target_claim_id": r[2],
+             "relation_type": r[3], "rationale": r[4], "recorded_at": r[5]}
+            for r in rows
+        ]
+
+    def review_relation_proposal(self, proposal_id, decision, note=None, reviewer=None):
+        if decision not in ("APPROVED", "REJECTED"):
+            raise ValidationError(f"RELATION_PROPOSAL: bad decision {decision!r} (expected APPROVED or REJECTED)")
+        row = self.conn.execute(
+            "SELECT source_claim_id, target_claim_id, relation_type, status FROM relation_proposals WHERE proposal_id=?",
+            (proposal_id,),
+        ).fetchone()
+        if not row:
+            raise ValidationError(f"RELATION_PROPOSAL: unknown proposal_id {proposal_id!r}")
+        source_claim_id, target_claim_id, relation_type, status = row
+        if status != "PENDING":
+            raise ValidationError(f"RELATION_PROPOSAL: {proposal_id!r} already decided ({status})")
+
+        applied_relation_id = None
+        if decision == "APPROVED":
+            # Only now -- after a human, not the model, has signed off --
+            # does this proposal ever touch the actual relations table.
+            applied_relation_id = self.add_relation(source_claim_id, target_claim_id, relation_type)
+
+        self.conn.execute(
+            "UPDATE relation_proposals SET status=?, decided_at=?, decided_by=?, decision_note=?, applied_relation_id=? "
+            "WHERE proposal_id=?",
+            (decision, now(), reviewer, note, applied_relation_id, proposal_id),
+        )
+        self.conn.commit()
+        return {"proposal_id": proposal_id, "status": decision, "applied_relation_id": applied_relation_id}
 
     # ---------- projection ----------
     def reinforce_path(self, from_ref, to_ref):
@@ -688,6 +778,64 @@ def _log_operator_interaction(kernel, task, response, parsed, outcome, detail=No
     kernel.conn.commit()
 
 
+def _handle_candidate_relation(kernel, task, response, c, cid, projection):
+    """
+    Handles an admitted candidate's optional "relation" field -- the model's
+    own self-report that its new claim (cid) connects to an existing claim.
+
+    ABOUT is low-stakes: project() only ever treats it as optional fill, so
+    it's applied immediately via add_relation(). DEPENDS_ON and CONTRADICTS
+    are the structural hinges project() treats as must-keep and fade_stale()
+    treats as unfadeable -- a model's unverified self-report doesn't get to
+    write those directly, so they're routed to propose_relation() instead:
+    logged clearly, left PENDING, and never touch the relations table until
+    a human calls review_relation_proposal().
+
+    Returns None if the candidate had no (or an unusable) relation field.
+    """
+    rel = c.get("relation")
+    if not isinstance(rel, dict):
+        return None
+
+    target = rel.get("target_claim_id")
+    rtype = rel.get("relation_type")
+    rationale = rel.get("rationale") or c.get("content")
+
+    if not isinstance(target, str) or rtype not in MODEL_RELATION_TYPES or target == cid:
+        return {"relation_type": rtype, "target_claim_id": target, "status": "IGNORED",
+                "detail": "malformed relation field (bad target_claim_id/relation_type, or self-relation)"}
+
+    # The target must be something the model actually saw in its projected
+    # workspace, not merely an id that happens to exist in the substrate --
+    # otherwise a hallucinated-but-coincidentally-real id would sail through.
+    workspace_ids = {claim["claim_id"] for claim in projection.get("claims", [])}
+    if target not in workspace_ids:
+        return {"relation_type": rtype, "target_claim_id": target, "status": "INVALID",
+                "detail": "target_claim_id was not in the projected workspace shown to the model"}
+
+    if rtype == "ABOUT":
+        try:
+            relation_id = kernel.add_relation(cid, target, "ABOUT")
+            return {"relation_type": "ABOUT", "target_claim_id": target,
+                    "status": "APPLIED", "relation_id": relation_id}
+        except ValidationError as e:
+            return {"relation_type": "ABOUT", "target_claim_id": target,
+                    "status": "INVALID", "detail": str(e)}
+
+    # DEPENDS_ON / CONTRADICTS: flag for review, don't write the edge.
+    try:
+        proposal_id = kernel.propose_relation(cid, target, rtype, rationale=rationale)
+    except ValidationError as e:
+        return {"relation_type": rtype, "target_claim_id": target, "status": "INVALID", "detail": str(e)}
+
+    _log_operator_interaction(
+        kernel, task, response, c, "RELATION_PROPOSED",
+        f"{rtype} proposal {proposal_id}: {cid} -> {target} (awaiting review, not applied to relations)",
+    )
+    return {"relation_type": rtype, "target_claim_id": target,
+            "status": "PENDING_REVIEW", "proposal_id": proposal_id}
+
+
 def run_operator_step(kernel: "PRCSAKernel", adapter: ModelAdapter, task: str,
                        seed_ids: list, node_budget: int, self_confidence=None,
                        max_tokens=1024):
@@ -768,10 +916,13 @@ def run_operator_step(kernel: "PRCSAKernel", adapter: ModelAdapter, task: str,
             model_confidence=c.get("model_confidence"),
             structural_support=(kernel.package_solidity(projection) or {}).get("solidity"),
         )
+        relation_result = _handle_candidate_relation(kernel, task, response, c, cid, projection)
+
         _log_operator_interaction(kernel, task, response, c, "ADMITTED", cid)
         return {"stage": "COMMITTED", "result": "ADMITTED", "claim_id": cid,
                 "model_id": response.model_id, "latency_ms": response.latency_ms,
-                "token_usage": response.token_usage, "coupling": coupling_note}
+                "token_usage": response.token_usage, "coupling": coupling_note,
+                "relation": relation_result}
     except (ValidationError, StaleTransition) as e:
         _log_operator_interaction(kernel, task, response, c, "REJECTED", str(e))
         return {"stage": "GATE", "result": "REJECTED", "reason": str(e),

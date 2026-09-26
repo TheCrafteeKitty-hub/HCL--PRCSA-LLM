@@ -12,6 +12,26 @@ Requires (once you have network + keys):
 import os, time, json
 from kernel import ModelAdapter, ModelRequest, ModelResponse
 
+# Shared across all three adapters so the relation-trust policy can't drift
+# between them. ABOUT is applied immediately (project() only ever treats it
+# as optional fill). DEPENDS_ON/CONTRADICTS are the structural hinges
+# project() treats as must-keep, so a model's own unverified self-report on
+# one of those is logged for human review instead of written directly.
+RELATION_FIELD_INSTRUCTIONS = (
+    'Optionally add a "relation" field if this candidate meaningfully '
+    'connects to an existing claim already visible in PROJECTED WORKSPACE: '
+    '{"target_claim_id": "<id from the workspace>", "relation_type": '
+    '"ABOUT|DEPENDS_ON|CONTRADICTS", "rationale": "..."}. ABOUT relations '
+    "are applied automatically -- they're low-stakes decoration. "
+    "DEPENDS_ON and CONTRADICTS are structural hinges that gate what "
+    "future work treats as load-bearing, so a proposal of either of "
+    "those is logged for human review, not applied automatically -- your "
+    "own say-so about a structural dependency or contradiction doesn't "
+    "get the same automatic trust as everything else here. Only set "
+    "target_claim_id to an id actually shown to you in PROJECTED "
+    "WORKSPACE, never one you're inferring or recalling."
+)
+
 
 class ClaudeAdapter(ModelAdapter):
     name = "claude"
@@ -45,6 +65,7 @@ class ClaudeAdapter(ModelAdapter):
             'PREDICTED|INTERVENTION_DERIVED|INFERRED", "kind": "CLAIM|HYPOTHESIS|'
             'PREDICTION|QUESTION|SIMULATION|ACTION_PROPOSAL|INTERPRETATION|'
             'UNCERTAINTY|TRANSLATION|HOLD", "falsification_test": null}\n'
+            f"{RELATION_FIELD_INSTRUCTIONS}\n"
             "If you do not have enough support to commit to a claim, respond with "
             '{"kind": "HOLD", "content": "why"} instead -- this is a legitimate, '
             "preferred outcome, not a failure. Do not invent a CLAIM just to "
@@ -101,6 +122,7 @@ class GPTAdapter(ModelAdapter):
             'PREDICTED|INTERVENTION_DERIVED|INFERRED", "kind": "CLAIM|HYPOTHESIS|'
             'PREDICTION|QUESTION|SIMULATION|ACTION_PROPOSAL|INTERPRETATION|'
             'UNCERTAINTY|TRANSLATION|HOLD", "falsification_test": null}. '
+            f"{RELATION_FIELD_INSTRUCTIONS} "
             "If you do not have enough support to commit to a claim, respond "
             'with {"kind": "HOLD", "content": "why"} instead -- this is a '
             "legitimate, preferred outcome, not a failure. Do not invent a "
@@ -158,6 +180,7 @@ class GrokAdapter(ModelAdapter):
             'PREDICTED|INTERVENTION_DERIVED|INFERRED", "kind": "CLAIM|HYPOTHESIS|'
             'PREDICTION|QUESTION|SIMULATION|ACTION_PROPOSAL|INTERPRETATION|'
             'UNCERTAINTY|TRANSLATION|HOLD", "falsification_test": null}. '
+            f"{RELATION_FIELD_INSTRUCTIONS} "
             "If you do not have enough support to commit to a claim, respond "
             'with {"kind": "HOLD", "content": "why"} instead -- this is a '
             "legitimate, preferred outcome, not a failure. Do not invent a "
