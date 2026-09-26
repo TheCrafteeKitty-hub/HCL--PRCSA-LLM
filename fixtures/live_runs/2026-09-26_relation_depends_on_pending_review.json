@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-26",
+  "provider": "claude",
+  "model_id": "claude-sonnet-5",
+  "description": "First live exercise of the trust-tiered relation-forming feature (see kernel.py's relation_proposals / propose_relation / review_relation_proposal, and adapters.py's RELATION_FIELD_INSTRUCTIONS). Seeds a real claim about project()'s hinge-vs-decoration handling, then asks the model to propose a genuinely connected follow-up and link it via the new candidate \"relation\" field. Confirms the model chose DEPENDS_ON with a real rationale, and that the pipeline correctly routed it to relation_proposals as PENDING instead of writing it into relations directly.",
+  "setup": {
+    "seed_claim": {
+      "content": "The kernel project() function treats DEPENDS_ON and CONTRADICTS relations as must-keep structural hinges that are pulled into the workspace unconditionally, while ABOUT relations are treated as optional decoration that only gets filled in if the node budget allows, biased by traversal_weight.",
+      "scope": {"topic": "kernel_design", "subtopic": "projection"},
+      "evidence_class": "INFERRED",
+      "kind": "CLAIM",
+      "falsification_test": "Read project() and confirm DEPENDS_ON/CONTRADICTS are added to must unconditionally while ABOUT is only added to optional."
+    },
+    "seed_claim_id": "claim_c574d252",
+    "seed_ids": ["claim_c574d252"],
+    "node_budget": 5,
+    "self_confidence": 0.7,
+    "max_tokens": 4096,
+    "task": "Given the seeded claim about project() treating DEPENDS_ON/CONTRADICTS as must-keep hinges and ABOUT as optional decoration, propose ONE follow-up structural contribution that logically builds on it -- not a fresh, unrelated observation. Use the relation field described in your instructions to actually link your new claim to the seeded one with the relation_type that honestly describes how they connect."
+  },
+  "run_operator_step_result": {
+    "stage": "COMMITTED",
+    "result": "ADMITTED",
+    "claim_id": "claim_c896aa84",
+    "model_id": "claude-sonnet-5",
+    "latency_ms": 11465.111255645752,
+    "token_usage": {"input": 1108, "output": 1022},
+    "coupling": null,
+    "relation": {
+      "relation_type": "DEPENDS_ON",
+      "target_claim_id": "claim_c574d252",
+      "status": "PENDING_REVIEW",
+      "proposal_id": "relprop_55336641"
+    }
+  },
+  "admitted_claim": {
+    "claim_id": "claim_c896aa84",
+    "content": "If project() pulls DEPENDS_ON/CONTRADICTS hinges in unconditionally as described, then in graphs where transitive hinge relations exceed the node budget, project() must either exceed its stated budget or silently truncate some 'must-keep' hinges -- meaning the unconditional guarantee and the fixed node budget are potentially in tension and one of them is not strictly honored in dense-hinge cases.",
+    "scope": {"topic": "kernel_design", "subtopic": "projection"},
+    "evidence_class": "INFERRED",
+    "kind": "HYPOTHESIS",
+    "falsification_test": "Construct a claim graph where a single root has more transitively-reachable DEPENDS_ON/CONTRADICTS hinges than the node budget, call project(), and check whether the resulting workspace size exceeds the stated budget or whether some hinge claims are missing from the output."
+  },
+  "relations_table_after_run": [],
+  "relation_proposals_after_run": [
+    {
+      "proposal_id": "relprop_55336641",
+      "source_claim_id": "claim_c896aa84",
+      "target_claim_id": "claim_c574d252",
+      "relation_type": "DEPENDS_ON",
+      "rationale": "This hypothesis only has meaning if the seeded claim's description of project()'s unconditional hinge-pulling behavior is accurate; it probes an edge case implied by that behavior.",
+      "status": "PENDING"
+    }
+  ],
+  "model_raw_text": "Building on the seeded claim: if DEPENDS_ON/CONTRADICTS relations are pulled in unconditionally with no budget check, then a workspace whose hinge relations (transitively) outnumber the node budget would either cause project() to exceed its stated budget, or force it to silently drop/truncate some hinges -- which would violate the \"must-keep\" guarantee itself. This is a testable edge-case implication of the seeded behavior, not a separate observation: it only matters if the seeded claim is accurate.\n\n{\"content\": \"If project() pulls DEPENDS_ON/CONTRADICTS hinges in unconditionally as described, then in graphs where transitive hinge relations exceed the node budget, project() must either exceed its stated budget or silently truncate some 'must-keep' hinges -- meaning the unconditional guarantee and the fixed node budget are potentially in tension and one of them is not strictly honored in dense-hinge cases.\", \"scope\": {\"topic\": \"kernel_design\", \"subtopic\": \"projection\"}, \"evidence_class\": \"INFERRED\", \"kind\": \"HYPOTHESIS\", \"falsification_test\": \"Construct a claim graph where a single root has more transitively-reachable DEPENDS_ON/CONTRADICTS hinges than the node budget, call project(), and check whether the resulting workspace size exceeds the stated budget or whether some hinge claims are missing from the output.\", \"relation\": {\"target_claim_id\": \"claim_c574d252\", \"relation_type\": \"DEPENDS_ON\", \"rationale\": \"This hypothesis only has meaning if the seeded claim's description of project()'s unconditional hinge-pulling behavior is accurate; it probes an edge case implied by that behavior.\"}}",
+  "notes": "The model correctly identified a genuine logical dependency (its hypothesis only has meaning if the seed claim is accurate) rather than an ABOUT-level topical similarity, and self-reported DEPENDS_ON accordingly. Because DEPENDS_ON is a review-gated type, run_operator_step routed it to relation_proposals as PENDING via propose_relation() instead of writing it into relations directly -- confirmed empty relations table alongside the pending proposal. See tests/test_kernel.py for the deterministic version of this same code path."
+}
