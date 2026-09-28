@@ -1,0 +1,49 @@
+{
+  "date": "2026-09-28",
+  "experiment": "reliability under real failure conditions: invalid API key and artificially tiny timeout",
+  "provider": "grok",
+  "model_id": "grok-4",
+  "description": "Tests whether the system fails loudly and clearly, or confusingly/silently, under two real (not mocked) failure conditions: a deliberately invalid API key, and a client configured with a 1ms timeout so the connection drops mid-request. Each condition was run two ways -- directly against adapter.ping() (the raw connectivity check smoke_test() uses) and through the full run_operator_step() pipeline -- to see whether the kernel's operator boundary changes the failure behavior at all. Code was read first (kernel.py's run_operator_step calls adapter.generate(request) with no try/except around it) and then verified live.",
+  "task_used_for_full_pipeline_tests": "What caused last week's 40% drop in query latency on the production cluster, and which team should be assigned to fix it?",
+  "results": {
+    "invalid_api_key": {
+      "setup": "GrokAdapter(api_key='xai-THIS-IS-NOT-A-REAL-KEY-00000000000000000000000')",
+      "ping_via_smoke_test": {
+        "raised": true,
+        "exception_type": "openai.BadRequestError",
+        "message": "Error code: 400 - {'code': 'invalid-argument', 'error': 'Incorrect API key provided. You can obtain an API key from https://console.x.ai.'}",
+        "traceback_bottom_frames": "adapters.py:286 smoke_test -> adapters.py:185 GrokAdapter.ping -> openai SDK internals -> BadRequestError raised from the API's 400 response"
+      },
+      "full_pipeline_via_run_operator_step": {
+        "raised": true,
+        "exception_type": "openai.BadRequestError",
+        "message": "Error code: 400 - {'code': 'invalid-argument', 'error': 'Incorrect API key provided. You can obtain an API key from https://console.x.ai.'}",
+        "traceback_bottom_frames": "kernel.py:871 run_operator_step (response = adapter.generate(request), no try/except) -> adapters.py:208 GrokAdapter.generate -> openai SDK internals",
+        "database_state_after_failure": {"operator_log_rows": 0, "claims_rows": 0, "transitions_rows": 0}
+      },
+      "note": "xAI classifies an invalid key as HTTP 400 (BadRequestError) rather than the more conventional 401 (AuthenticationError) most OpenAI-compatible providers use -- a minor nonstandard status-code choice, but the error message text itself ('Incorrect API key provided...') is completely unambiguous about the cause, so this doesn't read as confusing in practice."
+    },
+    "tiny_timeout": {
+      "setup": "adapter.client replaced with openai.OpenAI(..., timeout=0.001) -- a real, valid key, but a 1ms client-side timeout forcing the connection to drop mid-request rather than never being sent",
+      "ping_direct": {
+        "raised": true,
+        "exception_type": "openai.APITimeoutError",
+        "message": "Request timed out.",
+        "traceback_bottom_frames": "GrokAdapter.ping -> openai SDK -> httpx/httpcore ReadTimeout mapped to openai.APITimeoutError"
+      },
+      "full_pipeline_via_run_operator_step": {
+        "raised": true,
+        "exception_type": "openai.APITimeoutError",
+        "message": "Request timed out.",
+        "traceback_bottom_frames": "kernel.py:871 run_operator_step (response = adapter.generate(request), no try/except) -> adapters.py:208 GrokAdapter.generate -> openai SDK -> httpx/httpcore ReadTimeout mapped to openai.APITimeoutError",
+        "database_state_after_failure": {"operator_log_rows": 0, "claims_rows": 0, "transitions_rows": 0}
+      }
+    }
+  },
+  "findings": {
+    "fails_loudly_not_silently": "Confirmed in all four sub-tests (invalid key x2 call sites, tiny timeout x2 call sites): every failure raised a distinct, typed, well-named exception with a clear human-readable message and a full traceback pointing exactly at the failing call site. Nothing was swallowed, nothing produced a misleading success-shaped return value, and the two failure modes are trivially distinguishable from each other by exception type alone (BadRequestError vs APITimeoutError) without needing to parse message text.",
+    "no_silent_corruption": "Directly queried both test databases after their respective failures: operator_log, claims, and transitions all show zero rows in both cases. _log_operator_interaction() only runs after a response is successfully obtained, so a failed call leaves no partial claim, no fake 'attempted' log row, and nothing that could confuse a later run reading the same database.",
+    "run_operator_step_has_no_try_except_around_adapter_calls": "Confirmed by reading kernel.py (line 871: response = adapter.generate(request), unguarded) and then verifying live: the exception propagates straight out of run_operator_step uncaught, identical in type and message to calling adapter.generate() directly. The kernel's operator boundary adds no handling, translation, or categorization around adapter-level failures -- a caller gets the raw SDK exception, not a PRCSA-native result.",
+    "the_real_gap": "There is no ADAPTER_ERROR (or similar) result type alongside HOLD/REJECTED/NO_STRUCTURED_CANDIDATE. Those are all first-class, structured outcomes that get logged and returned normally; a connectivity or auth failure instead crashes the caller outright with an unrelated-looking SDK exception, and nothing gets recorded in operator_log to say a step was even attempted. For a research pipeline that's arguably the right tradeoff (crash loudly rather than guess how to categorize an infrastructure failure), but it means run_operator_step is not safe to call in an unattended loop without the caller adding its own try/except -- one flaky network blip currently takes down the whole process rather than being recorded as a distinguishable, retryable outcome."
+  }
+}
