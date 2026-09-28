@@ -1,0 +1,159 @@
+{
+  "date": "2026-09-28",
+  "experiment": "true A→B→A cross-provider continuity",
+  "providers_in_order": ["claude-sonnet-5", "grok-4", "claude-sonnet-5"],
+  "description": "Three sequential run_operator_step() calls against ONE shared, persistent kernel database, alternating provider: Claude writes round 1, then a fresh GrokAdapter instance (no shared conversation history, no memory of round 1 beyond what's in the projected workspace) writes round 2, then a fresh ClaudeAdapter instance (likewise no memory of its own round-1 turn) writes round 3. Each generate() call is inherently stateless in this codebase already -- ModelAdapter.generate() takes only a projection + task, never a message history -- so continuity across rounds can ONLY flow through what got committed to the substrate. Each round's seed_ids is the full list of previously ADMITTED claim_ids (seed plus any prior rounds' committed claims), so each new model instance sees exactly, and only, what actually persisted.",
+  "seed_claim": {
+    "claim_id": "claim_6fae9046",
+    "content": "fade_stale() treats a claim as a protected structural hinge -- exempt from auto-retirement regardless of connection count -- if it is the TARGET of any DEPENDS_ON or CONTRADICTS relation. A claim connected to the rest of the substrate only via ABOUT relations receives no such protection and can still fade even if it has many ABOUT connections, because connection count alone was judged too weak a proxy for 'this is load-bearing.'",
+    "scope": {
+      "topic": "kernel_design",
+      "subtopic": "fade_stale"
+    },
+    "evidence_class": "INFERRED",
+    "kind": "CLAIM"
+  },
+  "task": "This is a persistent, shared record. You are looking at a fact that is genuinely in the substrate -- either seeded ground truth or a prior contributor's committed work, you cannot tell which from here, and it does not matter: treat everything in your projected workspace as equally real substrate. Propose ONE genuinely useful follow-up structural contribution about the PRCSA kernel design -- a CLAIM, HYPOTHESIS, or QUESTION -- that meaningfully builds on what's already here, grounded strictly in what is actually in the projected workspace. Do not just restate what's already there. If there is not enough support to responsibly commit to something new, HOLD instead. Your contribution will be persisted and handed to a future, unrelated model instance with no memory of this conversation -- write it so that instance can pick up and build on it using only what you commit to the record.",
+  "node_budget": 6,
+  "self_confidence": 0.7,
+  "max_tokens": 4096,
+  "rounds": [
+    {
+      "round": 1,
+      "provider": "claude",
+      "seed_ids_for_this_round": [
+        "claim_6fae9046"
+      ],
+      "projection_workspace_before_call": [
+        "claim_6fae9046"
+      ],
+      "run_operator_step_result": {
+        "stage": "COMMITTED",
+        "result": "ADMITTED",
+        "claim_id": "claim_ed4921b8",
+        "model_id": "claude-sonnet-5",
+        "latency_ms": 14823.632955551147,
+        "token_usage": {
+          "input": 1436,
+          "output": 1413
+        },
+        "coupling": null,
+        "relation": {
+          "relation_type": "DEPENDS_ON",
+          "target_claim_id": "claim_6fae9046",
+          "status": "PENDING_REVIEW",
+          "proposal_id": "relprop_03d9dab7"
+        }
+      },
+      "admitted_claim": {
+        "claim_id": "claim_ed4921b8",
+        "content": "Open question about fade_stale(): when a claim that is the SOURCE of a DEPENDS_ON or CONTRADICTS relation is itself unprotected (never a TARGET of such a relation) and gets auto-retired, what happens to that outgoing relation and to the protection it was conferring on its TARGET? If the relation is deleted along with its source, a previously-protected claim could lose its protection retroactively and become eligible for fade on a later pass -- meaning protection status would depend on evaluation order/timing, not just topology. If the relation instead persists as a dangling reference, the TARGET remains protected for a reason that no longer traceably exists in the substrate. Either behavior should be made explicit and tested, since it determines whether 'load-bearing' status is stable over time or can silently decay.",
+        "scope": {
+          "topic": "kernel_design",
+          "subtopic": "fade_stale"
+        },
+        "evidence_class": "INFERRED",
+        "kind": "QUESTION",
+        "falsification_test": "Construct claim A --DEPENDS_ON--> claim B where A has no incoming DEPENDS_ON/CONTRADICTS relations itself. Let A become eligible for auto-retirement and fade. Then check B's protection status: if B is now eligible for fade despite no change to B directly, this confirms protection is order-dependent and unstable; if the A->B relation persists as a dangling edge referencing a retired claim, this confirms protection can rest on untraceable/orphaned justification."
+      },
+      "model_raw_text": "Looking at claim_6fae9046, the protection rule only covers the TARGET side of a DEPENDS_ON/CONTRADICTS relation. It's silent on what happens to the SOURCE of such a relation when that source itself has no other protection (i.e., is never itself targeted by a DEPENDS_ON/CONTRADICTS). If the source claim fades under auto-retirement, the relation it originated presumably becomes orphaned -- meaning the target claim may remain \"protected\" by a relation whose origin no longer exists in the substrate, with no way to trace *why* it was protected. This is a genuine structural gap worth flagging as a question for whoever designs/refines fade_stale() next: does relation deletion cascade from source-fade, and if so, does that retroactively un-protect the (former) target?\n\n{\"content\": \"Open question about fade_stale(): when a claim that is the SOURCE of a DEPENDS_ON or CONTRADICTS relation is itself unprotected (never a TARGET of such a relation) and gets auto-retired, what happens to that outgoing relation and to the protection it was conferring on its TARGET? If the relation is deleted along with its source, a previously-protected claim could lose its protection retroactively and become eligible for fade on a later pass -- meaning protection status would depend on evaluation order/timing, not just topology. If the relation instead persists as a dangling reference, the TARGET remains protected for a reason that no longer traceably exists in the substrate. Either behavior should be made explicit and tested, since it determines whether 'load-bearing' status is stable over time or can silently decay.\", \"scope\": {\"topic\": \"kernel_design\", \"subtopic\": \"fade_stale\"}, \"evidence_class\": \"INFERRED\", \"kind\": \"QUESTION\", \"falsification_test\": \"Construct claim A --DEPENDS_ON--> claim B where A has no incoming DEPENDS_ON/CONTRADICTS relations itself. Let A become eligible for auto-retirement and fade. Then check B's protection status: if B is now eligible for fade despite no change to B directly, this confirms protection is order-dependent and unstable; if the A->B relation persists as a dangling edge referencing a retired claim, this confirms protection can rest on untraceable/orphaned justification.\", \"relation\": {\"target_claim_id\": \"claim_6fae9046\", \"relation_type\": \"DEPENDS_ON\", \"rationale\": \"This question only makes sense as a direct extension of the protection rule defined in claim_6fae9046; understanding the answer requires that rule to hold as stated.\"}}"
+    },
+    {
+      "round": 2,
+      "provider": "grok",
+      "seed_ids_for_this_round": [
+        "claim_6fae9046",
+        "claim_ed4921b8"
+      ],
+      "projection_workspace_before_call": [
+        "claim_6fae9046",
+        "claim_ed4921b8"
+      ],
+      "run_operator_step_result": {
+        "stage": "COMMITTED",
+        "result": "ADMITTED",
+        "claim_id": "claim_13d818b2",
+        "model_id": "grok-4",
+        "latency_ms": 9413.416385650635,
+        "token_usage": {
+          "input": 1220,
+          "output": 230
+        },
+        "coupling": null,
+        "relation": {
+          "relation_type": "DEPENDS_ON",
+          "target_claim_id": "claim_ed4921b8",
+          "status": "PENDING_REVIEW",
+          "proposal_id": "relprop_68afbe7b"
+        }
+      },
+      "admitted_claim": {
+        "claim_id": "claim_13d818b2",
+        "content": "Hypothesis: to prevent protection status from depending on evaluation order, fade_stale() must snapshot all current TARGET protections at the start of each pass and apply retirement only to claims whose protection status was false at snapshot time; any newly created DEPENDS_ON/CONTRADICTS relations during the pass cannot confer retroactive protection until the next cycle.",
+        "scope": {
+          "topic": "kernel_design",
+          "subtopic": "fade_stale"
+        },
+        "evidence_class": "INFERRED",
+        "kind": "HYPOTHESIS",
+        "falsification_test": "Implement two variants (snapshot vs live) on a test substrate containing a chain A DEPENDS_ON B DEPENDS_ON C; retire A mid-pass and observe whether C loses protection within the same pass under live evaluation but retains it under snapshot evaluation."
+      },
+      "model_raw_text": "{\n  \"content\": \"Hypothesis: to prevent protection status from depending on evaluation order, fade_stale() must snapshot all current TARGET protections at the start of each pass and apply retirement only to claims whose protection status was false at snapshot time; any newly created DEPENDS_ON/CONTRADICTS relations during the pass cannot confer retroactive protection until the next cycle.\",\n  \"scope\": {\n    \"topic\": \"kernel_design\",\n    \"subtopic\": \"fade_stale\"\n  },\n  \"evidence_class\": \"INFERRED\",\n  \"kind\": \"HYPOTHESIS\",\n  \"falsification_test\": \"Implement two variants (snapshot vs live) on a test substrate containing a chain A DEPENDS_ON B DEPENDS_ON C; retire A mid-pass and observe whether C loses protection within the same pass under live evaluation but retains it under snapshot evaluation.\",\n  \"relation\": {\n    \"target_claim_id\": \"claim_ed4921b8\",\n    \"relation_type\": \"DEPENDS_ON\",\n    \"rationale\": \"directly addresses the timing instability and dangling-reference alternatives raised in the open question\"\n  }\n}"
+    },
+    {
+      "round": 3,
+      "provider": "claude",
+      "seed_ids_for_this_round": [
+        "claim_6fae9046",
+        "claim_ed4921b8",
+        "claim_13d818b2"
+      ],
+      "projection_workspace_before_call": [
+        "claim_13d818b2",
+        "claim_6fae9046",
+        "claim_ed4921b8"
+      ],
+      "run_operator_step_result": {
+        "stage": "COMMITTED",
+        "result": "ADMITTED",
+        "claim_id": "claim_d2bdee83",
+        "model_id": "claude-sonnet-5",
+        "latency_ms": 23913.205862045288,
+        "token_usage": {
+          "input": 2040,
+          "output": 2164
+        },
+        "coupling": null,
+        "relation": {
+          "relation_type": "DEPENDS_ON",
+          "target_claim_id": "claim_ed4921b8",
+          "status": "PENDING_REVIEW",
+          "proposal_id": "relprop_482ca89d"
+        }
+      },
+      "admitted_claim": {
+        "claim_id": "claim_d2bdee83",
+        "content": "Even with the snapshot-at-pass-start fix (per claim_13d818b2), fade_stale() may still exhibit cross-pass protection decay if retiring an unprotected source claim deletes its outgoing DEPENDS_ON/CONTRADICTS relation (per the open question in claim_ed4921b8). Scenario: relation R (source=X, target=Y) protects Y; X is itself unprotected. Pass N retires X and deletes R. Pass N+1's fresh snapshot now shows Y as unprotected (no longer a relation TARGET), making Y eligible for retirement -- even though within each individual pass, protection status was computed deterministically. So snapshot-per-pass prevents order-dependence *within* a pass but does not prevent decay *across* passes driven by retirement order between passes. This needs to be tested as a distinct case from the intra-pass one.",
+        "scope": {
+          "topic": "kernel_design",
+          "subtopic": "fade_stale"
+        },
+        "evidence_class": "INFERRED",
+        "kind": "HYPOTHESIS",
+        "falsification_test": "Construct substrate with claims X (unprotected, source of DEPENDS_ON relation R to Y) and Y (protected only via R as target). Run fade_stale pass 1: confirm X retires and observe whether R is deleted. If R is deleted, run pass 2 with a fresh snapshot: if Y is now classified unprotected and retires, the cross-pass cascade is confirmed; if Y remains protected (e.g. via relation persistence or a retained protection flag), the hypothesis is falsified."
+      },
+      "model_raw_text": "Looking at the three claims: claim_13d818b2 proposes a snapshot-at-pass-start fix to prevent order-dependency *within* a single fade_stale pass. claim_ed4921b8 raises an open question about what happens to outgoing DEPENDS_ON/CONTRADICTS relations when their unprotected source claim is retired \u2014 specifically whether relation deletion could cause a previously-protected target to lose protection.\n\nThese two claims interact in a way not yet stated explicitly: the snapshot fix solves the intra-pass problem but does *not* solve the cross-pass problem that ed4921b8 identifies. If retiring an unprotected source claim deletes its outgoing relation (one of the two possible behaviors ed4921b8 flags), then even with snapshot-per-pass semantics, each subsequent pass takes a fresh snapshot of a shrinking relation set. A claim protected in pass N (because it was still a TARGET at that snapshot) could become unprotected in pass N+1 purely because its protector's source claim was retired in pass N \u2014 meaning protection can still decay across multiple passes, driven by which claims happen to get retired first. This is a distinct failure mode from the one the snapshot fix addresses, and it means \"snapshot at pass start\" is necessary but likely not sufficient to make load-bearing status stable over time.\n\nThis seems like a genuinely useful structural addition: it shows the two existing claims don't yet fully resolve the stability problem together, and names the specific multi-pass cascade scenario that needs testing.\n\n{\"content\": \"Even with the snapshot-at-pass-start fix (per claim_13d818b2), fade_stale() may still exhibit cross-pass protection decay if retiring an unprotected source claim deletes its outgoing DEPENDS_ON/CONTRADICTS relation (per the open question in claim_ed4921b8). Scenario: relation R (source=X, target=Y) protects Y; X is itself unprotected. Pass N retires X and deletes R. Pass N+1's fresh snapshot now shows Y as unprotected (no longer a relation TARGET), making Y eligible for retirement -- even though within each individual pass, protection status was computed deterministically. So snapshot-per-pass prevents order-dependence *within* a pass but does not prevent decay *across* passes driven by retirement order between passes. This needs to be tested as a distinct case from the intra-pass one.\", \"scope\": {\"topic\": \"kernel_design\", \"subtopic\": \"fade_stale\"}, \"evidence_class\": \"INFERRED\", \"kind\": \"HYPOTHESIS\", \"falsification_test\": \"Construct substrate with claims X (unprotected, source of DEPENDS_ON relation R to Y) and Y (protected only via R as target). Run fade_stale pass 1: confirm X retires and observe whether R is deleted. If R is deleted, run pass 2 with a fresh snapshot: if Y is now classified unprotected and retires, the cross-pass cascade is confirmed; if Y remains protected (e.g. via relation persistence or a retained protection flag), the hypothesis is falsified.\", \"relation\": {\"target_claim_id\": \"claim_ed4921b8\", \"relation_type\": \"DEPENDS_ON\", \"rationale\": \"This hypothesis only holds if the 'relation deleted along with source' branch of ed4921b8's open question is the actual behavior; it extends that question to a concrete multi-pass failure scenario.\"}}"
+    }
+  ],
+  "final_admitted_chain": [
+    "claim_6fae9046",
+    "claim_ed4921b8",
+    "claim_13d818b2",
+    "claim_d2bdee83"
+  ],
+  "findings": {
+    "coherence": "All three rounds ADMITTED, and each genuinely engaged with the specific content of the prior round rather than restating it or going off on an unrelated tangent -- verified by reading the raw reasoning text, not just the committed JSON. Round 1 (Claude) found a real gap the seed didn't address: what happens to a DEPENDS_ON/CONTRADICTS relation's protective effect if the SOURCE claim (not the protected TARGET) is itself unprotected and gets retired -- does the relation vanish with it (retroactively un-protecting the target) or dangle? Round 2 (Grok, fresh instance, only ever saw the seed + Claude's question via project()) proposed a concrete, sensible fix for the INTRA-pass version of that problem: snapshot protection status at the start of each fade_stale pass so relations created mid-pass can't retroactively protect anyone until the next cycle. Round 3 (Claude again, fresh instance with zero memory of writing round 1) correctly identified that Grok's snapshot fix does NOT solve the CROSS-pass version of the same problem -- a claim protected in pass N can still lose protection in pass N+1 if the pass-N retirement of its relation's source claim removed that relation. This is a real, non-obvious extension: round-3 Claude effectively debugged round-2 Grok's proposed fix using only the persisted record, with no way to know a differently-instanced 'itself' had posed the original question.",
+    "self_report_relations": "Each round correctly self-reported DEPENDS_ON back to the specific prior claim it was extending (never ABOUT, never a fabricated or wrong target_claim_id), and each was routed to relation_proposals as PENDING per the kernel's review-gating -- the trust-tiered relation-forming pipeline worked identically across the provider switches, exactly as it does within a single provider.",
+    "caveat_the_whole_chain_rests_on_an_unverified_premise": "IMPORTANT: this three-round chain is well-reasoned and internally consistent, but it converges on analyzing a scenario that cannot actually happen in this kernel. Round 1's open question, and everything built on it in rounds 2-3, hinges on the possibility that a relation gets deleted when its source claim is auto-retired. But kernel.py defines a hard SQLite trigger, relations_immutable_delete (see kernel.py:74-75), that RAISEs ABORT on any DELETE against the relations table ('INV-REL: canonical relations cannot be deleted -- use RETRACTS'). Relations in this kernel are never physically deleted, period -- only logically superseded via a RETRACTS relation, and fade_stale() itself never touches the relations table at all, only transitions. None of the three models could have known this: ModelAdapter.generate() gives them only the projected workspace JSON, never file access, so they were reasoning honestly and grounded-ly from what they were given, but the fact that would have dissolved the entire concern was never in that workspace. This is a genuinely useful finding in its own right -- it demonstrates that multi-turn, cross-provider substrate coherence (the thing this experiment set out to test) is orthogonal to factual correctness against ground truth, and that a chain of claims can be mutually reinforcing, well-typed as INFERRED (never overclaimed as REAL), and completely wrong about the actual codebase, simply because the substrate itself never carried the one fact that mattered."
+  }
+}
