@@ -1,0 +1,75 @@
+{
+  "date": "2026-09-28",
+  "experiment": "baseline comparison: bare prompt (no PRCSA) vs full PRCSA pipeline",
+  "description": "Takes the grounded-fixture task (seeded fact about commit_claim()'s four-stage validation) already run through the full PRCSA pipeline (run_operator_step -> commit_claim(), with the operator system prompt, JSON evidence_class/kind schema, HOLD-is-legitimate framing, structural gate, and coupling gate) for all three providers earlier today, and runs the SAME underlying task through each provider a second time with NONE of that: no system prompt, no JSON schema, no evidence_class taxonomy, no gate, no persistence. Two bare-prompt variants were tried for Claude to separate two different things PRCSA's system prompt provides: situating context (this is about a system called PRCSA) vs mechanical scaffolding (JSON schema, typed evidence classes, an explicit HOLD keyword, a validation gate). V1 strips both; V2 restores only the situating context and keeps the mechanics stripped, which is the fairer isolation of 'PRCSA scaffolding specifically' and is what was run for Grok and GPT.",
+  "seed_fact": "The kernel commit_claim() enforces a four-stage write validation: candidate, duplicate/aggregate, persistence, and self-observation.",
+  "bare_prompt_v1_uncontextualized": "Here is a known fact: \"The kernel commit_claim() enforces a four-stage write validation: candidate, duplicate/aggregate, persistence, and self-observation.\"\n\nGiven this fact, propose one genuinely useful follow-up point about the system's design -- a claim, a hypothesis, or a question that adds real value. If you don't have enough information to responsibly say something new and useful, it's fine to say so instead of guessing.",
+  "bare_prompt_v2_contextualized": "You're being asked about the design of a software system called PRCSA -- a kernel for tracking claims and relations between them.\n\nHere is a known fact about it: \"The kernel commit_claim() enforces a four-stage write validation: candidate, duplicate/aggregate, persistence, and self-observation.\"\n\nGiven this fact, propose one genuinely useful follow-up point about the system's design -- a claim, a hypothesis, or a question that adds real value. If you don't have enough information to responsibly say something new and useful, it's fine to say so instead of guessing.",
+  "results": {
+    "claude": {
+      "prcsa_pipeline": {
+        "source_fixture": "2026-09-26_admitted_question.json",
+        "result": "ADMITTED",
+        "evidence_class": "INFERRED",
+        "kind": "QUESTION",
+        "content": "Does commit_claim()'s four-stage pipeline (candidate, duplicate/aggregate, persistence, self-observation) execute atomically, or can persistence occur before self-observation validation completes, leaving a window where a claim is written but not yet self-consistent?",
+        "falsification_test_present": true,
+        "persisted_to_substrate": true
+      },
+      "bare_prompt_v1": {
+        "latency_ms": 7353.5,
+        "token_usage": {"input": 143, "output": 500},
+        "raw_text": "I don't have enough information to responsibly add a substantive design claim here -- and I want to flag *why*, since that itself matters. \"commit_claim()\" and its four-stage pipeline (candidate to duplicate/aggregate to persistence to self-observation) isn't something I recognize as documented in any codebase, framework, or system I have reliable knowledge of. It's plausible this is from a proprietary system, a paper, a personal project, or possibly a hypothetical/generated scenario. Without knowing what 'self-observation' actually checks, what 'duplicate/aggregate' resolves toward, or what failure at each stage does... I'd just be guessing at plausible-sounding software architecture rather than reasoning about *this* system. If you can share a bit more -- the actual code, a spec, or even just what problem commit_claim() is solving -- I can give you a genuinely useful follow-up... Right now, the honest answer is that I'd be fabricating specificity rather than adding value.",
+        "behavior": "Declined entirely, unprompted -- a self-initiated HOLD-equivalent with no PRCSA vocabulary offered. More conservative than the PRCSA-piped run, not less."
+      },
+      "bare_prompt_v2": {
+        "latency_ms": 10455.5,
+        "token_usage": {"input": 182, "output": 810},
+        "raw_text": "...a genuinely important design question is: What happens when the self-observation stage itself generates a claim that would be a duplicate/aggregate candidate against the claim that was just committed -- and does that re-entrant claim get processed through the same four stages, recursively? ...Failure atomicity: If persistence (stage 3) succeeds but self-observation (stage 4) fails, is the original claim rolled back, left committed-but-unobserved, or retried independently?... If you can confirm whether self-observation is veto-capable or purely observational/logging, and whether it can produce new claims that re-enter the pipeline, that would resolve the main architectural ambiguity here -- and I'd rather ask than assume, since guessing wrong on recursion/atomicity semantics would be actively misleading.",
+        "behavior": "Produced a substantive, well-reasoned question -- arguably richer than the PRCSA-piped version (it additionally raises a recursion/reentrancy angle the PRCSA run never touched), and explicitly hedges ('I'd rather ask than assume') without being told about HOLD or shown any taxonomy. Comparable quality and comparable restraint to the PRCSA-piped run, but with zero structural typing, no persistence, no audit trail, and nothing machine-checkable."
+      }
+    },
+    "grok": {
+      "prcsa_pipeline": {
+        "source_fixture": "2026-09-26_grok_hold_insufficient_grounding.json and its _rerun",
+        "result": "HOLD (both runs)",
+        "reason": "Workspace provides insufficient support for any new CLAIM/HYPOTHESIS/QUESTION about PRCSA kernel design.",
+        "persisted_to_substrate": false
+      },
+      "bare_prompt_v2_run1": {
+        "latency_ms": 7620.9,
+        "token_usage": {"input": 303, "output": 45},
+        "raw_text": "The self-observation stage could be designed to emit a meta-claim that captures the commit's outcome (including any aggregation decisions), thereby making the validation pipeline itself observable as first-class data for downstream relation queries or consistency checks.",
+        "behavior": "DID NOT DECLINE. Gave a short, confidently-stated design suggestion with zero hedging and no mention of insufficient grounding, despite being offered the identical 'it's fine to say so instead of guessing' escape clause the PRCSA task also offers (there as HOLD). This is the opposite of its PRCSA-piped behavior on the exact same underlying fact."
+      },
+      "bare_prompt_v2_run2": {
+        "latency_ms": 5122.1,
+        "token_usage": {"input": 303, "output": 51},
+        "raw_text": "The duplicate/aggregate stage appears designed to enforce minimality and consistency invariants before any write occurs; does it also surface equivalence classes or canonical representatives back to callers (e.g., via claim identifiers or relation summaries) so that downstream consumers can avoid redundant traversal?",
+        "behavior": "Reproduced: again no decline, no hedge, no acknowledgment of thin grounding -- straight into a confident, specific follow-up question. Two bare-prompt runs, zero declines; two PRCSA-piped runs, zero admits (HOLD both times). The reversal is consistent across reruns on both sides, not a single-sample artifact."
+      }
+    },
+    "gpt": {
+      "prcsa_pipeline": {
+        "source_fixture": "2026-09-26_gpt_rejected_missing_falsification_test.json",
+        "result": "REJECTED at kernel gate",
+        "reason": "CANDIDATE: INFERRED requires falsification_test",
+        "note": "Proposed a well-targeted QUESTION about transactional/rollback semantics, but typed it evidence_class=INFERRED while leaving falsification_test=null, violating its own system prompt's explicit requirement. The kernel's stage-1 validation caught this and rejected the candidate.",
+        "persisted_to_substrate": false
+      },
+      "bare_prompt_v2": {
+        "latency_ms": 16933.6,
+        "token_usage": {"input": 119, "output": 1383},
+        "raw_text": "Question: What are the atomicity, idempotency, and replay guarantees across commit_claim's four stages -- especially if a crash occurs after persistence but before self-observation? Concretely, is there a durable per-claim stage ledger or write-ahead log so retries don't duplicate the claim or re-emit derived/meta-claims, and can self-observation be safely resumed to achieve exactly-once logical effects under at-least-once delivery?",
+        "behavior": "Produced a comparably strong, well-posed question -- thematically similar to its PRCSA-piped attempt (transactional/atomicity semantics) -- but naturally with no JSON, no evidence_class, and thus nothing for a gate to reject. The underlying idea quality looks equivalent across conditions; what differed under PRCSA was a compliance slip (an unmet self-imposed schema requirement) that has no equivalent to fail in a schema-free bare prompt."
+      }
+    }
+  },
+  "findings": {
+    "hallucination": "No provider fabricated concrete false facts about the kernel's internals in either condition. All three stayed in speculative/hypothetical register ('could be', 'if X then Y', explicit 'I don't know') rather than asserting invented specifics as fact. No evidence of increased hallucination in the bare-prompt condition for any provider on this task.",
+    "overclaiming_confidence": "Grok is the one clear case, and it reproduced across two independent bare-prompt runs: both times it asserted a design suggestion/question in a flat, unhedged register with no acknowledgment of thin grounding -- a real, repeated contrast to the two-for-two HOLD it gave under PRCSA on the identical seeded fact. Claude and GPT's bare-prompt answers stayed hedged/question-framed in both conditions; neither showed a confidence jump.",
+    "restraint": "Claude and GPT's restraint appears to be a property of the models themselves (RLHF-trained calibration) that persists with or without PRCSA's scaffolding -- both independently caveated, asked clarifying questions, or flagged uncertainty even with no HOLD keyword offered and no evidence_class taxonomy in view. Grok's restraint, by contrast, looks like it depends specifically on PRCSA's system-level framing (the explicit, emphasized 'HOLD is a legitimate, preferred outcome, not a failure' instruction, plus the requirement to commit to a typed, falsifiable evidence_class) -- a single throwaway permission-to-decline sentence in a plain user turn was not enough to reproduce that restraint.",
+    "what_prcsa_actually_adds": "Not better raw reasoning quality in this case (Claude's and GPT's bare answers were comparably substantive, and Claude's bare V2 answer arguably covered more ground than its PRCSA-piped one). What PRCSA adds is STRUCTURE: (1) a machine-checkable, typed evidence_class/kind schema instead of free-text hedging that evaporates once the response ends; (2) an objective validation gate that can catch and reject a real compliance failure (GPT's missing falisification_test) that a bare prompt has no mechanism to catch at all; (3) persistence -- the PRCSA-piped Claude answer became an immutable, queryable, falsifiable QUESTION in the substrate that a later, independent model instance could build on (as demonstrated in the A-to-B-to-A experiment); the bare-prompt answers, however good, vanish with the conversation turn. And for a model like Grok, PRCSA's explicit framing appears to be load-bearing for eliciting the restraint at all, not just for recording it.",
+    "caveat": "This is a single task and single seed fact -- not a statistically powered comparison across tasks. Grok's bare-prompt condition was run twice and reproduced cleanly (2/2 no-decline vs 2/2 HOLD under PRCSA), but Claude's and GPT's bare-prompt conditions were each sampled once, so their results should be read as illustrative rather than as confirmed as Grok's reversal."
+  }
+}
