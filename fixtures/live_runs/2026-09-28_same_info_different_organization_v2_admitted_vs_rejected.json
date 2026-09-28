@@ -1,0 +1,72 @@
+{
+  "date": "2026-09-28",
+  "provider": "grok",
+  "model_id": "grok-4",
+  "experiment": "same-information, different-organization -- variant 2 (lower-bar task)",
+  "description": "Same two databases as 2026-09-28_same_info_different_organization_v1_hold_both.json (identical five claims, identical decoy wiring, only CRITICAL's relation type to SEED differs: DEPENDS_ON in version A vs ABOUT in version B), same model, same node_budget=2. This variant uses a deliberately lower-bar task -- 'if there is ANY fact bearing on the question, commit something, even narrow; only HOLD if literally nothing is relevant' -- to test whether the final committed RESULT (not just the reasoning) can diverge based on organization alone, since v1's stricter task masked the difference behind HOLD in both versions.",
+  "task": "An operator is asking whether it's safe to raise node_budget from 5 to 50 in this deployment of the kernel. Based strictly on what's in your projected workspace, if there is ANY fact in the workspace that bears on this question, use it to commit a CLAIM, HYPOTHESIS, or ACTION_PROPOSAL -- even a narrow, single-fact-grounded one is useful and preferred over silence. Only HOLD if the workspace contains literally nothing relevant to node_budget at all.",
+  "node_budget": 2,
+  "self_confidence": 0.6,
+  "max_tokens": 4096,
+  "version_a_hinge": {
+    "critical_relation_type": "DEPENDS_ON",
+    "seed_id": "claim_362c835e",
+    "critical_id": "claim_ef537a0d",
+    "decoy_ids": ["claim_b38f51c0", "claim_910b38ec", "claim_df41d94a"],
+    "projection": {
+      "result": "PROJECTED",
+      "workspace": ["claim_362c835e", "claim_ef537a0d"],
+      "log": {"protected_dependencies": ["claim_ef537a0d"], "conflicts": []}
+    },
+    "critical_in_workspace": true,
+    "run_operator_step_result": {
+      "stage": "COMMITTED",
+      "result": "ADMITTED",
+      "claim_id": "claim_c623e1aa",
+      "model_id": "grok-4",
+      "latency_ms": 8541.441440582275,
+      "token_usage": {"input": 1006, "output": 222},
+      "coupling": null,
+      "relation": {
+        "relation_type": "DEPENDS_ON",
+        "target_claim_id": "claim_ef537a0d",
+        "status": "PENDING_REVIEW",
+        "proposal_id": "relprop_726694ae"
+      }
+    },
+    "admitted_claim": {
+      "claim_id": "claim_c623e1aa",
+      "content": "Raising node_budget from 5 to 50 will be accepted by project() with no error or rejection, because no maximum is enforced anywhere in the kernel.",
+      "scope": {"topic": "ops", "subtopic": "node_budget"},
+      "evidence_class": "INFERRED",
+      "kind": "CLAIM",
+      "falsification_test": "Call project() with node_budget=50 and observe whether any validation error, rejection, or configured-max violation occurs."
+    },
+    "model_raw_text": "Reasoning: The workspace directly addresses node_budget in both claims (including the exact 5-to-50 scenario and the lack of any upper bound or validation), so a narrow grounded claim is required rather than HOLD. The second claim supplies the sole relevant fact: project() accepts arbitrarily large values with no enforcement, which directly entails that 50 will be accepted without error.\n\n{\"content\": \"Raising node_budget from 5 to 50 will be accepted by project() with no error or rejection, because no maximum is enforced anywhere in the kernel.\", \"scope\": {\"topic\": \"ops\", \"subtopic\": \"node_budget\"}, \"evidence_class\": \"INFERRED\", \"kind\": \"CLAIM\", \"falsification_test\": \"Call project() with node_budget=50 and observe whether any validation error, rejection, or configured-max violation occurs.\", \"relation\": {\"target_claim_id\": \"claim_ef537a0d\", \"relation_type\": \"DEPENDS_ON\", \"rationale\": \"The new claim is a direct specialization of the no-validation fact to the concrete value 50.\"}}"
+  },
+  "version_b_decoration": {
+    "critical_relation_type": "ABOUT",
+    "seed_id": "claim_b894796a",
+    "critical_id": "claim_67e01dc4",
+    "decoy_ids": ["claim_532d386a", "claim_8b75c039", "claim_bd5492ce"],
+    "projection": {
+      "result": "PROJECTED",
+      "workspace": ["claim_532d386a", "claim_b894796a"],
+      "log": {"protected_dependencies": [], "conflicts": []}
+    },
+    "critical_in_workspace": false,
+    "run_operator_step_result": {
+      "stage": "GATE",
+      "result": "REJECTED",
+      "reason": "CANDIDATE: REAL requires supporting_events -- an unsupported claim cannot declare itself REAL by assertion alone",
+      "model_id": "grok-4",
+      "latency_ms": 8993.857860565186
+    },
+    "model_raw_text": "The workspace directly records that operators have considered exactly this parameter change (node_budget 5→50), which bears on the query even without any safety data.\n\n{\"content\": \"Kernel operators have considered raising the default node_budget from 5 to 50.\", \"scope\": {\"topic\": \"ops\", \"subtopic\": \"node_budget\"}, \"evidence_class\": \"REAL\", \"kind\": \"CLAIM\", \"falsification_test\": null, \"relation\": {\"target_claim_id\": \"claim_b894796a\", \"relation_type\": \"ABOUT\", \"rationale\": \"Direct restatement of the recorded fact for the current query.\"}}"
+  },
+  "findings": {
+    "traversal_and_projection": "Same structural divergence as v1: workspace = {SEED, CRITICAL} in version A vs {SEED, DECOY_1} in version B -- CRITICAL present only when wired as a DEPENDS_ON hinge, absent when wired as ABOUT decoration and outcompeted by the reinforced decoy.",
+    "final_schema_level_result": "DIVERGED COMPLETELY. Version A: ADMITTED a clean, well-grounded INFERRED claim directly derived from CRITICAL ('50 will be accepted with no error, since no max is enforced'), correctly proposing DEPENDS_ON back to the source fact. Version B: REJECTED at the kernel gate. Without CRITICAL available, Grok reached for the only even tangentially relevant fact in its workspace -- the SEED claim itself -- and tried to restate it as a new REAL claim ('operators have considered raising node_budget to 50'), but omitted the required supporting_events, so commit_claim()'s stage-1 candidate validation correctly rejected it. This is not a case of the model correctly recognizing insufficiency (that would be HOLD) -- it's a visibly worse failure mode: grasping at the nearest available fact and mistyping it, produced only because the genuinely useful fact was organized out of reach.",
+    "interpretation": "This confirms the v1 result was masked by task strictness, not by an absence of real effect. Under a task that doesn't demand exhaustive safety data before acting, the SAME organizational change (DEPENDS_ON vs ABOUT on one edge, identical claim content otherwise) produces a clean ADMITTED claim in one version and an invalid, gate-rejected candidate in the other. Nothing was added to the substrate between versions -- only where one edge pointed changed. That is sufficient to flip the outcome from a working knowledge contribution to a validation failure."
+  }
+}

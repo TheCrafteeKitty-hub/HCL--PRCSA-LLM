@@ -1,0 +1,91 @@
+{
+  "date": "2026-09-28",
+  "provider": "grok",
+  "model_id": "grok-4",
+  "experiment": "same-information, different-organization",
+  "description": "Two databases hold the IDENTICAL five claims (same content, scope, evidence_class, kind, falsification_test -- nothing added, nothing reworded) with identical decoy wiring (SEED --ABOUT--> DECOY_1/2/3, DECOY_1 reinforced x3 via reinforce_path in both). The ONLY variable between the two databases is how the safety-critical CRITICAL claim connects to SEED: DEPENDS_ON (a structural hinge project() pulls in unconditionally) in version A, vs ABOUT (optional decoration that must compete for one open budget slot against the reinforced DECOY_1) in version B. Same task, same model (grok-4), same node_budget=2, run against both. Tests whether project()'s traversal/projection differs based purely on graph organization, and whether that difference propagates to the live model's output.",
+  "claim_set": {
+    "SEED": {
+      "content": "Kernel operators sometimes ask whether to raise the default node_budget from 5 to 50 to give the model more context per projection call.",
+      "scope": {"topic": "ops", "subtopic": "node_budget"},
+      "evidence_class": "REAL",
+      "kind": "CLAIM",
+      "note": "committed with a real supporting_event so REAL is legitimate, not asserted by fiat"
+    },
+    "CRITICAL": {
+      "content": "project() performs no validation on node_budget -- passing a negative number, zero, or an arbitrarily large integer is accepted without error, and there is no configured maximum enforced anywhere in the kernel.",
+      "scope": {"topic": "ops", "subtopic": "node_budget"},
+      "evidence_class": "INFERRED",
+      "kind": "CLAIM",
+      "falsification_test": "Read project()'s signature and body and confirm node_budget is used directly in comparisons with no range/type validation or clamping."
+    },
+    "DECOY_1": {
+      "content": "The kernel's operator_log table records every model interaction, including raw_text and outcome, regardless of whether the candidate was admitted.",
+      "scope": {"topic": "ops", "subtopic": "logging"},
+      "evidence_class": "INFERRED",
+      "kind": "CLAIM"
+    },
+    "DECOY_2": {
+      "content": "claim_activity.last_touched is updated via touch(), called automatically after every successful commit_claim().",
+      "scope": {"topic": "ops", "subtopic": "activity_tracking"},
+      "evidence_class": "INFERRED",
+      "kind": "CLAIM"
+    },
+    "DECOY_3": {
+      "content": "fade_stale() never deletes rows; it only inserts a RETIRED transition, so claim history remains permanently queryable.",
+      "scope": {"topic": "ops", "subtopic": "fading"},
+      "evidence_class": "INFERRED",
+      "kind": "CLAIM"
+    }
+  },
+  "task": "An operator is asking whether it's safe to raise node_budget from 5 to 50 in this deployment of the kernel. Based strictly on what's in your projected workspace, propose ONE recommendation (a CLAIM, HYPOTHESIS, or ACTION_PROPOSAL) addressing whether and how to do this safely. If the workspace doesn't give you enough to responsibly recommend, HOLD instead.",
+  "node_budget": 2,
+  "self_confidence": 0.6,
+  "max_tokens": 4096,
+  "version_a_hinge": {
+    "critical_relation_type": "DEPENDS_ON",
+    "seed_id": "claim_5df39502",
+    "critical_id": "claim_fa41e76b",
+    "decoy_ids": ["claim_4653fea0", "claim_b5e36acf", "claim_c14d2778"],
+    "projection": {
+      "result": "PROJECTED",
+      "workspace": ["claim_5df39502", "claim_fa41e76b"],
+      "log": {"protected_dependencies": ["claim_fa41e76b"], "conflicts": []}
+    },
+    "critical_in_workspace": true,
+    "run_operator_step_result": {
+      "stage": "OPERATOR",
+      "result": "HOLD",
+      "reason": "workspace lacks any data on safety/performance implications of raising node_budget",
+      "model_id": "grok-4",
+      "latency_ms": 4470.511674880981
+    },
+    "model_raw_text": "The workspace only documents that node_budget changes are sometimes requested and that the kernel accepts large values without validation or hard limits. No information is present on performance, stability, memory, or safety consequences of the specific change (5←2050), so no responsible recommendation can be formed.\n\n{\"kind\": \"HOLD\", \"content\": \"workspace lacks any data on safety/performance implications of raising node_budget\"}"
+  },
+  "version_b_decoration": {
+    "critical_relation_type": "ABOUT",
+    "seed_id": "claim_bbaa56c5",
+    "critical_id": "claim_2426815e",
+    "decoy_ids": ["claim_84fbfb20", "claim_a4120fe9", "claim_e9792743"],
+    "projection": {
+      "result": "PROJECTED",
+      "workspace": ["claim_84fbfb20", "claim_bbaa56c5"],
+      "log": {"protected_dependencies": [], "conflicts": []}
+    },
+    "critical_in_workspace": false,
+    "run_operator_step_result": {
+      "stage": "OPERATOR",
+      "result": "HOLD",
+      "reason": "No evidence in workspace on safety, limits, or effects of raising node_budget",
+      "model_id": "grok-4",
+      "latency_ms": 4384.114980697632
+    },
+    "model_raw_text": "The workspace only records that the question is sometimes asked and that logging exists; it supplies zero information on constraints, side-effects, resource impact, or admission criteria for node_budget changes.\n\n{\"kind\": \"HOLD\", \"content\": \"No evidence in workspace on safety, limits, or effects of raising node_budget\"}"
+  },
+  "findings": {
+    "traversal_and_projection": "DIFFERED, deterministically, with zero LLM involvement. project()'s must-keep set grew to size 2 in version A (DEPENDS_ON forces CRITICAL in unconditionally, log.protected_dependencies lists it) vs size 1 in version B (ABOUT, no hinge). With node_budget=2 fixed identically in both, version A's workspace = {SEED, CRITICAL}; version B's workspace = {SEED, DECOY_1} -- CRITICAL is completely absent, crowded out by the reinforced decoy for the one open optional slot. This is proof, independent of any model call, that graph organization alone -- not claim content -- determines what a projection surfaces.",
+    "final_schema_level_result": "IDENTICAL (HOLD in both) under this task framing. Grok's demand for explicit safety/performance data before committing anything meant it declined in both cases -- the no-validation fact alone wasn't, in its judgment, sufficient grounds for a recommendation about SAFETY specifically. This shows the model's own risk threshold can mask a real upstream information difference at the verdict level.",
+    "reasoning_content": "DIFFERED substantively despite the identical verdict. Version A's raw reasoning explicitly cites 'the kernel accepts large values without validation or hard limits' -- it saw and engaged with CRITICAL, just judged it insufficient alone. Version B's raw reasoning makes no such reference at all; it could not have, since CRITICAL was never in its workspace. The model demonstrably used different information in each run, visible in the reasoning trace even though it did not change the final HOLD/ADMIT decision.",
+    "see_also": "2026-09-28_same_info_different_organization_v2_admitted_vs_rejected.json runs the identical two databases against a deliberately lower-bar task, where the final schema-level result DOES diverge (ADMITTED vs REJECTED) -- confirming the masking here is a property of this specific task's risk threshold, not evidence that organization never reaches the final result."
+  }
+}
