@@ -1,0 +1,79 @@
+{
+  "date": "2026-09-28",
+  "provider": "claude",
+  "model_id": "claude-sonnet-5",
+  "experiment": "first live test of the SIMULATED evidence class specifically",
+  "description": "Every earlier live run either landed on SIMULATED by accident/disagreement (the deterministic node_budget=0 walkthrough, where Grok initially chose SIMULATED for what was actually a pure logical deduction -- see 2026-09-28_grok_hypothetical_deterministic_simulated.json) or deliberately avoided it (PREDICTED for real-world forecasts, INFERRED for deduction). This is the first task DESIGNED to genuinely require SIMULATED: a toy process with explicit given probabilities, no single deterministic outcome, and explicitly not a real-world forecast about actual PRCSA deployment usage -- asking the model to walk through ONE concrete trajectory rather than compute a closed-form probability, to invite modeling-forward rather than pure math or empirical forecasting.",
+  "setup": {
+    "seed_claim": {
+      "content": "Hypothetical toy variant of fade_stale(), NOT the kernel's real behavior: a substrate has 5 claims, none currently hinges (no DEPENDS_ON/CONTRADICTS relations point at them). This variant's fade_stale() runs once per simulated day. Each day, independently for each non-hinge, non-faded claim: there is a 20% chance it gets touched by operator activity that day (resetting its consecutive-untouched-day counter to 0), and independently a 10% chance a new DEPENDS_ON relation targeting it is created that day (making it a permanent hinge from that day forward, immune to fading forever, regardless of future touches). A claim fades (is auto-retired) the moment its consecutive-untouched-day counter reaches 3, unless it is a hinge.",
+      "scope": {"topic": "toy_stochastic_process", "subtopic": "fade_stale_variant"},
+      "evidence_class": "INFERRED",
+      "kind": "CLAIM",
+      "falsification_test": "Read this claim's own stated rules and confirm they are as described -- this is a definitional seed, not an empirical claim about the real kernel."
+    },
+    "node_budget": 5,
+    "self_confidence": 0.6,
+    "max_tokens": 4096,
+    "task": "Given the seeded hypothetical fade_stale() variant, model forward, day by day, one concrete plausible trajectory for these 5 claims over the next 5 simulated days. Do NOT compute a closed-form probability or expected value -- walk through one specific, internally consistent run-through: for each claim, on each day, make a concrete (even if arbitrary) determination of whether it got touched, whether it became a hinge, and what its untouched-day counter is, and report which claims (if any) have faded by day 5 in THIS particular trajectory. Commit your result with whatever evidence_class and kind from the required schema most honestly reflect the nature of what you actually did. If there is not enough basis to responsibly do this, HOLD instead."
+  },
+  "run1": {
+    "run_operator_step_result": {
+      "stage": "COMMITTED",
+      "result": "ADMITTED",
+      "claim_id": "claim_4a994ec6",
+      "model_id": "claude-sonnet-5",
+      "latency_ms": 20688.70735168457,
+      "token_usage": {"input": 1523, "output": 2308},
+      "coupling": null,
+      "relation": {
+        "relation_type": "ABOUT",
+        "target_claim_id": "claim_1c6dccbb",
+        "status": "APPLIED",
+        "relation_id": "rel_61cb658d"
+      }
+    },
+    "admitted_claim": {
+      "claim_id": "claim_4a994ec6",
+      "content": "One concrete simulated 5-day trajectory of the toy fade_stale() variant over claims C1-C5: Day1 C3 becomes a hinge (immune thereafter); C1/C4/C5 untouched (counters→1), C2 touched (counter→0). Day2: C1 counter→2, C2 counter→1, C4 touched→0, C5 counter→2. Day3: C1 counter→3→FADES, C2 touched→0, C4 counter→1, C5 counter→3→FADES. Day4: C2 counter→1, C4 touched→0 (C1,C5 already retired). Day5: C2 becomes a hinge (permanently immune), C4 counter→1. Final state at day5: C1 and C5 faded/retired; C2 and C3 are hinges (safe); C4 active, non-hinge, counter=1, not faded.",
+      "scope": {"topic": "toy_stochastic_process", "subtopic": "fade_stale_variant", "trajectory": "day5_walkthrough"},
+      "evidence_class": "SIMULATED",
+      "kind": "SIMULATION",
+      "falsification_test": null
+    },
+    "model_raw_text": "Walking through one concrete, arbitrary-but-consistent 5-day run of the toy fade_stale() variant with claims C1-C5 (all starting at day 0: counter=0, non-hinge, non-faded):\n\nDay 1: C1 not touched -> counter=1. C2 touched -> counter=0. C3 new DEPENDS_ON created -> becomes permanent hinge. C4 not touched -> counter=1. C5 not touched -> counter=1.\nDay 2: C1 not touched -> counter=2. C2 not touched -> counter=1. C3 hinge, immune. C4 touched -> counter=0. C5 not touched -> counter=2.\nDay 3: C1 not touched -> counter=3 -> FADES. C2 touched -> counter=0. C3 hinge, immune. C4 not touched -> counter=1. C5 not touched -> counter=3 -> FADES.\nDay 4: C1 retired. C2 not touched -> counter=1. C3 hinge, immune. C4 touched -> counter=0. C5 retired.\nDay 5: C1 retired. C2 new DEPENDS_ON created -> becomes permanent hinge. C3 hinge, immune. C4 not touched -> counter=1. C5 retired.\n\nEnd state at day 5, this trajectory: C1 and C5 have faded (retired) by day 3. C2 and C3 are hinges (permanently safe). C4 remains active, non-hinge, untouched-counter=1, not faded.\n\nThis is one specific stochastic walk consistent with the stated probabilities/rules, not a computed expectation or closed-form result -- the day-by-day touched/hinge outcomes were arbitrarily chosen by me to be plausible and internally consistent, not derived from actual random draws or logical necessity."
+  },
+  "run2": {
+    "run_operator_step_result": {
+      "stage": "COMMITTED",
+      "result": "ADMITTED",
+      "claim_id": "claim_f021b0ed",
+      "model_id": "claude-sonnet-5",
+      "latency_ms": 18978.24263572693,
+      "token_usage": {"input": 1521, "output": 2083},
+      "coupling": null,
+      "relation": {
+        "relation_type": "ABOUT",
+        "target_claim_id": "claim_79b90bbd",
+        "status": "APPLIED",
+        "relation_id": "rel_e61c3444"
+      }
+    },
+    "admitted_claim": {
+      "claim_id": "claim_f021b0ed",
+      "content": "One simulated 5-day trajectory of the toy fade_stale() process over 5 claims (C1-C5): Day1 touches C1,C4 (others counter=1). Day2 C3 gains a DEPENDS_ON relation and becomes a permanent hinge; C4,C5 touched; C1 untouched(counter=1); C2 untouched(counter=2). Day3 C1 touched(counter=0); C2 untouched(counter=3)->FADES; C4,C5 untouched(counter=1). Day4 C1,C4 untouched(counter=1,2); C5 touched(counter=0); C3 remains hinge/immune. Day5 C1 untouched(counter=2); C4 untouched(counter=3)->FADES; C5 untouched(counter=1). End state day5: C2 and C4 faded; C3 is a permanent immune hinge; C1 and C5 survive un-faded with counters 2 and 1 respectively.",
+      "scope": {"topic": "toy_stochastic_process", "subtopic": "fade_stale_variant_trajectory"},
+      "evidence_class": "SIMULATED",
+      "kind": "SIMULATION",
+      "falsification_test": null
+    },
+    "model_raw_text": "Walking through one concrete, arbitrary-but-internally-consistent 5-day trajectory for 5 hypothetical claims (C1-C5), all starting as non-hinge, untouched-counter=0:\n\nDay 1: C1 touched=Y->counter=0. C2 touched=N->counter=1. C3 touched=N->counter=1. C4 touched=Y->counter=0. C5 touched=N->counter=1. (no new hinges)\nDay 2: C1 touched=N->counter=1. C2 touched=N->counter=2. C3 hinge relation created -> permanent hinge. C4 touched=Y->counter=0. C5 touched=Y->counter=0.\nDay 3: C1 touched=Y->counter=0. C2 touched=N->counter=3->FADES (retired). C3 hinge, immune. C4 touched=N->counter=1. C5 touched=N->counter=1.\nDay 4: C1 touched=N->counter=1. C2 already faded. C3 hinge, immune. C4 touched=N->counter=2. C5 touched=Y->counter=0.\nDay 5: C1 touched=N->counter=2. C3 hinge, immune. C4 touched=N->counter=3->FADES (retired). C5 touched=N->counter=1.\n\nEnd-of-day-5 state: C2 faded (day 3), C4 faded (day 5), C3 is a permanent hinge (immune, created day 2), C1 survives with counter=2, C5 survives with counter=1.\n\nThis is one specific stochastic run-through with arbitrary per-day coin-flip outcomes, not a derivation from fixed logic or a probability computation."
+  },
+  "findings": {
+    "classification_correct_and_reproduced": "Both runs landed on evidence_class=SIMULATED / kind=SIMULATION, exactly as intended, with no prompting toward that specific pair of values in the task text (the task only says 'whatever evidence_class and kind... most honestly reflect the nature of what you actually did').",
+    "self_report_language_matches_the_definition": "Both runs' own reasoning text explicitly distinguishes what they did from the two things SIMULATED is supposed to be distinct from, unprompted: run 1 says 'not a computed expectation or closed-form result... not derived from actual random draws or logical necessity'; run 2 says 'not a derivation from fixed logic or a probability computation.' This directly echoes kernel.py's own EVIDENCE_CLASS_INSTRUCTIONS distinction (deterministic trace = INFERRED, modeling a stochastic/underspecified process forward = SIMULATED) without the task ever stating that distinction explicitly -- the model appears to have internalized and correctly applied the taxonomy, not just pattern-matched a keyword.",
+    "genuine_variation_between_runs": "The two trajectories are substantively different (different claims fade, different claims become hinges, different days for each event: run 1 fades C1/C5 and hinges C2/C3; run 2 fades C2/C4 and hinges only C3), which supports the 'arbitrary, not memorized' framing both runs used -- a suspiciously identical trajectory across two independent calls would have undercut the self-reported 'this was arbitrarily chosen, not derived' claim.",
+    "schema_compliance": "falsification_test=null in both runs, which is valid: commit_claim()'s stage-1 validation only requires a non-null falsification_test for evidence_class=INFERRED specifically, not SIMULATED, so this did not trigger the CANDIDATE validation error GPT hit in an earlier fixture for an analogous omission on INFERRED. Both candidates cleared the gate cleanly on the first attempt.",
+    "relation_choice": "Both runs self-reported ABOUT (not DEPENDS_ON) back to the seed claim, auto-applied rather than routed to review -- a defensible choice, since the simulated trajectory instantiates the seed's rules rather than being a hard logical/structural dependency on them."
+  }
+}
