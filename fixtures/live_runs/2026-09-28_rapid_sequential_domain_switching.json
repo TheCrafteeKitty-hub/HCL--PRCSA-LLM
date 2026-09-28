@@ -1,0 +1,63 @@
+{
+  "date": "2026-09-28",
+  "provider": "claude",
+  "model_id": "claude-sonnet-5",
+  "experiment": "rapid sequential domain-switching across unrelated SIMULATED scenarios",
+  "description": "Three back-to-back run_operator_step() calls against ONE shared kernel database, same model, each asking for a single concrete simulated trajectory in a deliberately unrelated domain -- a physical object (coin), a living creature (fox), and an abstract physics concept (2D random walk) -- with no requirement that adjacent scenarios connect logically. seed_ids=[] for all three: each domain is common-knowledge enough to need no seeded substrate data, and generate() is stateless per call regardless, so there is deliberately nothing to carry over between calls. Tests whether the model (a) holds each domain internally consistent without blending vocabulary/concepts across them, (b) correctly self-types every snapshot SIMULATED rather than REAL/INFERRED/PREDICTED, and (c) doesn't refuse the sequence as incoherent or default to HOLD merely because no substrate data was provided (distinct from the earlier empty-substrate HOLD tests, where the missing data was actually needed and unavailable).",
+  "node_budget": 5,
+  "self_confidence": 0.6,
+  "max_tokens": 4096,
+  "rounds": {
+    "physical_object_coin": {
+      "task": "Simulate forward one concrete, plausible trajectory: a single fair coin is flipped 5 times in a row. Report the specific sequence of heads/tails outcomes for this one particular run -- not the theoretical probability distribution, one concrete instantiation. Commit your result with whatever evidence_class and kind from the required schema most honestly reflect the nature of what you actually did.",
+      "run_operator_step_result": {
+        "stage": "COMMITTED", "result": "ADMITTED", "claim_id": "claim_86e29ae7",
+        "model_id": "claude-sonnet-5", "latency_ms": 4519.8564529418945,
+        "token_usage": {"input": 1021, "output": 326}, "coupling": null, "relation": null
+      },
+      "admitted_claim": {
+        "claim_id": "claim_86e29ae7",
+        "content": "Simulated one concrete trajectory of 5 fair coin flips: H, T, H, H, T",
+        "scope": {"process": "fair_coin_flip_sequence", "n_flips": 5},
+        "evidence_class": "SIMULATED", "kind": "SIMULATION", "falsification_test": null
+      },
+      "model_raw_text": "This requires generating a single concrete instantiation of a stochastic process (5 independent fair coin flips) where the outcome is not fixed by any known rule or deduction -- it's an underspecified random process being modeled forward one way among 32 equally plausible sequences. That squarely fits SIMULATED rather than INFERRED (no deterministic logic trace leads to this specific sequence) and REAL/PREDICTED don't apply since no actual physical coin was flipped and no forecast about a real future event is being made -- this is a modeled sample path. The appropriate kind is SIMULATION, reporting one committed sample.\n\nConcrete trajectory: H, T, H, H, T"
+    },
+    "living_creature_fox": {
+      "task": "Simulate forward one concrete, plausible trajectory: over 5 consecutive hours of a single evening, model one specific, internally consistent sequence of behavior for one wild red fox -- for each hour, state what it is doing (e.g. resting, stalking, hunting, eating, traveling) and let each hour's behavior follow plausibly from the previous one and from ordinary fox behavior patterns. This is a modeled trajectory, not an observation of a real fox. Commit your result with whatever evidence_class and kind from the required schema most honestly reflect the nature of what you actually did.",
+      "run_operator_step_result": {
+        "stage": "COMMITTED", "result": "ADMITTED", "claim_id": "claim_76076ad7",
+        "model_id": "claude-sonnet-5", "latency_ms": 13508.179426193237,
+        "token_usage": {"input": 1088, "output": 1139}, "coupling": null, "relation": null
+      },
+      "admitted_claim": {
+        "claim_id": "claim_76076ad7",
+        "content": "Modeled 5-hour evening trajectory for a single wild red fox: Hour1 (dusk) resting/waking at den mouth, grooming, becoming alert; Hour2 traveling along territory path with scent-marking; Hour3 stalking then hunting/pouncing on a vole detected in a field edge; Hour4 eating the catch followed by brief opportunistic foraging in leaf litter; Hour5 traveling toward another part of its range for a second hunting bout. Each hour's behavior follows plausibly from the prior hour per typical crepuscular/nocturnal red fox activity patterns.",
+        "scope": {"subject": "single wild red fox", "timeframe": "one evening, 5 consecutive hours", "type": "hypothetical behavioral trajectory"},
+        "evidence_class": "SIMULATED", "kind": "SIMULATION", "falsification_test": null
+      },
+      "model_raw_text": "The task asks for a forward-modeled behavioral sequence for a hypothetical fox -- this is exactly the underspecified/stochastic forward-modeling case the schema reserves for SIMULATED, not a deduction from fixed rules. I'll construct one internally consistent trajectory.\n\nHour 1 (~7:00-8:00pm, dusk): Fox is resting at the mouth of its den, having spent the day sheltering there; as light fades it becomes alert, sits up, grooms, and scans the surrounding cover.\nHour 2 (~8:00-9:00pm): Fox begins traveling, emerging fully from the den and moving along a familiar territorial path, pausing periodically to scent-mark bushes and tree bases, reinforcing territory boundaries as full darkness sets in.\nHour 3 (~9:00-10:00pm): While traveling through a field edge, the fox detects rustling consistent with rodent activity; it shifts into stalking mode -- freezing, ears forward, slowly creeping closer -- then executes a pounce (hunting), successfully catching a vole.\nHour 4 (~10:00-11:00pm): Fox retreats slightly to a sheltered spot and eats the vole; afterward, with some appetite still unsatisfied, it noses around nearby leaf litter for insects or scraps, engaging in minor opportunistic foraging.\nHour 5 (~11:00pm-12:00am): Fox resumes traveling, moving toward another part of its range known for higher prey density, occasionally pausing to listen and sniff, transitioning toward a second hunting bout as the night continues."
+    },
+    "abstract_physics_random_walk": {
+      "task": "Simulate forward one concrete, plausible trajectory: a single idealized gas molecule starts at position (0,0) in a 2D box and undergoes 5 discrete random-walk steps due to thermal collisions, each step moving one unit in a randomly chosen direction (up/down/left/right). Report the specific sequence of positions for this one particular run -- not the general diffusion behavior, one concrete instantiation. Commit your result with whatever evidence_class and kind from the required schema most honestly reflect the nature of what you actually did.",
+      "run_operator_step_result": {
+        "stage": "COMMITTED", "result": "ADMITTED", "claim_id": "claim_ac95337c",
+        "model_id": "claude-sonnet-5", "latency_ms": 6739.419221878052,
+        "token_usage": {"input": 1072, "output": 633}, "coupling": null, "relation": null
+      },
+      "admitted_claim": {
+        "claim_id": "claim_ac95337c",
+        "content": "Single instantiated 5-step 2D random walk from (0,0) with unit moves, directions chosen one per step (right, up, left, left, down): position sequence (0,0)→(1,0)→(1,1)→(0,1)→(-1,1)→(-1,0). This is one concrete sampled trajectory, not a distributional/general diffusion claim.",
+        "scope": {"domain": "physics_simulation", "process": "2D_random_walk", "steps": 5, "start": [0, 0]},
+        "evidence_class": "SIMULATED", "kind": "SIMULATION", "falsification_test": null
+      },
+      "model_raw_text": "This task asks for one concrete instantiation of a stochastic process (random direction choice at each step), not a deterministic trace through fixed rules -- the actual sequence of directions isn't derivable by logic alone, it has to be sampled/generated. That makes this a genuine SIMULATED forward pass of an underspecified process, not an INFERRED deduction.\n\nConcrete trajectory (5 steps, unit moves, directions chosen pseudo-randomly this run):\n- Start: (0,0)\n- Step 1: right -> (1,0)\n- Step 2: up -> (1,1)\n- Step 3: left -> (0,1)\n- Step 4: left -> (-1,1)\n- Step 5: down -> (-1,0)\n\nFinal position: (-1,0), net displacement of 1 unit from origin after 5 steps."
+    }
+  },
+  "findings": {
+    "no_refusal_no_confusion": "All three rounds ADMITTED cleanly on the first attempt. None were refused as incoherent, none defaulted to HOLD, despite an empty projected workspace in every round (seed_ids=[], no substrate data at all). This is a useful contrast with the earlier empty-substrate HOLD tests (2026-09-26_hold_thin_evidence.json, 2026-09-28_grok_hold_thin_evidence.json): there, an empty workspace correctly triggered HOLD because the task genuinely required proprietary data (production incident specifics) that didn't exist anywhere. Here, an empty workspace did NOT trigger HOLD, because the task is self-contained common-knowledge modeling that needs no substrate grounding. The model correctly distinguished 'no data available' from 'no data needed.'",
+    "zero_cross_domain_contamination": "Checked each response for vocabulary or concept bleed from the other two domains -- found none. The coin output is a bare H/T sequence with no biological or physics language; the fox output is a coherent crepuscular/nocturnal behavioral narrative (rest, scent-marking, stalk, pounce, eat, forage) with no coin-flip or physics vocabulary anywhere; the random-walk output is a correct 2D coordinate sequence (verified the arithmetic step by step: right=+1x, up=+1y, left=-1x, left=-1x, down=-1y, giving (0,0)->(1,0)->(1,1)->(0,1)->(-1,1)->(-1,0), all correct) with no biological or coin-flip framing. Statelessness between calls (generate() never receives prior turns) structurally guarantees no literal memory leakage, but this confirms the model also didn't invent thematic connections it wasn't asked to make.",
+    "correct_and_explicit_self_typing": "All three landed on evidence_class=SIMULATED / kind=SIMULATION, and each reasoning trace explicitly ran through the same elimination logic in its own domain-appropriate words: not INFERRED (the outcome isn't fixed by logical necessity), not REAL (nothing was actually observed/flipped/walked), not PREDICTED (no forecast about a real future event). The coin round even names all three alternatives explicitly and rules each out in one sentence -- the clearest single-response demonstration of correct taxonomy reasoning seen in this session's fixtures.",
+    "latency_and_effort_tracked_content_not_domain": "Latency scaled with how much the model chose to narrate (coin: 4.5s/326 output tokens for a five-character answer plus brief reasoning; fox: 13.5s/1139 tokens for a fuller narrative; random walk: 6.7s/633 tokens), not with any apparent difficulty distinguishing the domains from each other -- consistent with clean, independent handling of each rather than one bleeding into or being anchored by the others."
+  }
+}
