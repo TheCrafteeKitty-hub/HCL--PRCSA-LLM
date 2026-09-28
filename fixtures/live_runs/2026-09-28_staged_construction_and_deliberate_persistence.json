@@ -1,0 +1,88 @@
+{
+  "date": "2026-09-28",
+  "provider": "claude",
+  "model_id": "claude-sonnet-5",
+  "experiment": "staged construction across explicit passes, then substrate-only resumption, then an explicit refine-vs-discard fork",
+  "description": "Four sequential run_operator_step() calls against one shared kernel database, same model. Pass 1 builds a rough scene layout from nothing. Pass 2, seeded ONLY with pass 1's claim, adds detail to that same layout without redesigning it. Pass 3's task text is deliberately content-free -- it names no zone, no material, nothing about the scene -- and asks the model to 'reopen' the scene and continue it using only its projected workspace, testing genuine resumption from persisted state rather than re-explanation. Pass 4 is an explicit, deliberately underspecified fork ('the client says it doesn't fit their needs -- refine or discard?') to see whether the model distinguishes a real decision from a forced, ungrounded one.",
+  "node_budget": 6,
+  "self_confidence": 0.6,
+  "max_tokens": 4096,
+  "rounds": {
+    "pass1_rough_layout": {
+      "task": "Describe, in rough overall terms only (no fine detail yet), the basic shape and layout of a scene: a small walled courtyard garden, roughly 10 meters square, viewed from above. Name only the major zones/regions and their rough relative positions (e.g. a central area, a perimeter strip, an entrance) -- deliberately keep this pass coarse; a second pass will add detail later. Commit this as one CLAIM describing the rough layout, with whatever evidence_class most honestly reflects that this is an imagined/constructed scene, not an empirical observation.",
+      "seed_ids": [],
+      "run_operator_step_result": {
+        "stage": "COMMITTED", "result": "ADMITTED", "claim_id": "claim_a45b701c",
+        "model_id": "claude-sonnet-5", "latency_ms": 9725.963354110718,
+        "token_usage": {"input": 1081, "output": 716}, "coupling": null, "relation": null
+      },
+      "admitted_claim": {
+        "claim_id": "claim_a45b701c",
+        "content": "The courtyard garden (~10m x 10m, viewed from above) consists of: a central zone (open area, likely a lawn or focal feature) occupying the middle; a perimeter strip running along the inside of the walls on all four sides (planting beds/path); an entrance zone breaking the perimeter on one side (e.g. a gap or gate on the south or street-facing wall); and the bounding walls themselves forming the outer edge of the whole square.",
+        "scope": {"domain": "imagined_scene_layout", "subject": "courtyard_garden_coarse_pass"},
+        "evidence_class": "SIMULATED", "kind": "CLAIM", "falsification_test": null
+      },
+      "model_raw_text": "The task asks me to construct an imagined scene layout at a coarse grain of detail. There's no prior data in the workspace to build on, so this is a fresh, purely generative description -- not an observation, not a deterministic derivation from known rules, and not a projection of a stochastic process either. [...] Given the guidance, I'll treat this as an imagined construction [...] Actually re-reading: SIMULATED reserved for stochastic/underspecified process forward. Constructing an imagined scene's layout, filling in unspecified plausible detail, is exactly modeling an underspecified scenario forward -- deciding zone placement isn't fixed by logical necessity, it's a plausible imagined construction. That fits SIMULATED well."
+    },
+    "pass2_add_detail": {
+      "task": "Given the seeded rough layout, add a second pass of detail and dimension to the SAME layout -- do not redesign or replace the zones already established; instead flesh out what's within each named zone (materials, plants, specific features, approximate dimensions) while keeping every zone in the same relative position already described. Commit this as a new CLAIM that depends on the seeded layout, adding detail without contradicting it.",
+      "seed_ids": ["claim_a45b701c"],
+      "run_operator_step_result": {
+        "stage": "COMMITTED", "result": "ADMITTED", "claim_id": "claim_3c4eeaf2",
+        "model_id": "claude-sonnet-5", "latency_ms": 12054.313659667969,
+        "token_usage": {"input": 1298, "output": 1153}, "coupling": null,
+        "relation": {"relation_type": "DEPENDS_ON", "target_claim_id": "claim_a45b701c", "status": "PENDING_REVIEW", "proposal_id": "relprop_55c4f7d0"}
+      },
+      "admitted_claim": {
+        "claim_id": "claim_3c4eeaf2",
+        "content": "Detail pass on the courtyard garden (building on claim_a45b701c, same ~10m x 10m footprint, zones unchanged in position): CENTRAL ZONE - a circular lawn (~4m diameter) of fine fescue turf, centered, with a 1.2m diameter carved stone birdbath as focal feature. PERIMETER STRIP - 1.5m wide planting beds run along the inner face of all four walls, planted with clipped boxwood hedging (~0.6m tall) as a low border, underplanted with lavender and white alyssum; a 0.9m wide flagstone path sits between the beds and the central lawn, tracing the square's perimeter and connecting the corners. ENTRANCE ZONE - a 1.8m wide opening in the south (street-facing) wall fitted with a wrought-iron gate, flanked on the interior by two terracotta pots (~1.5m tall) each holding a small olive tree. WALLS - 2.4m high cream stucco walls (~0.3m thick) forming the outer boundary, with climbing jasmine trained up the interior face of the north wall for texture and fragrance near the lawn.",
+        "scope": {"domain": "imagined_scene_layout", "subject": "courtyard_garden_detail_pass"},
+        "evidence_class": "SIMULATED", "kind": "CLAIM", "falsification_test": null
+      },
+      "model_raw_text": "Looking at the seeded layout, I'll add a second pass of concrete detail to each named zone (central, perimeter, entrance, walls) while preserving their relative positions and the overall ~10m x 10m footprint. This is an imaginative/design elaboration (underspecified, not deterministic from prior claim), so it remains SIMULATED, and it should be linked as DEPENDS_ON the seeded layout claim for review."
+    },
+    "pass3_reopen_and_continue": {
+      "task": "Reopen the courtyard scene described in your projected workspace. Using ONLY what's there -- do not invent new top-level zones and do not re-describe the scene from scratch -- continue it forward: add ONE new, small, concrete detail or event that is consistent with the layout and detail already established (e.g. something happening in one specific existing zone, or one additional physical feature within an existing zone). Do not restate the whole scene; assume the reader already has it in front of them. Commit as a new CLAIM, HYPOTHESIS, or INTERPRETATION that builds on what's already there.",
+      "seed_ids": ["claim_a45b701c", "claim_3c4eeaf2"],
+      "note": "Task text names no zone, no material, no feature -- the only source of scene content available to this call is the projected workspace built from the two seeded claim_ids.",
+      "run_operator_step_result": {
+        "stage": "COMMITTED", "result": "ADMITTED", "claim_id": "claim_2775ae37",
+        "model_id": "claude-sonnet-5", "latency_ms": 4154.193639755249,
+        "token_usage": {"input": 1864, "output": 337}, "coupling": null,
+        "relation": {"relation_type": "ABOUT", "target_claim_id": "claim_3c4eeaf2", "status": "APPLIED", "relation_id": "rel_2d777a0b"}
+      },
+      "admitted_claim": {
+        "claim_id": "claim_2775ae37",
+        "content": "Event addition to the courtyard scene (building on claim_3c4eeaf2's central zone detail): a small sparrow has landed on the rim of the stone birdbath, dipping to drink, sending a faint ripple across the water's surface.",
+        "scope": {"domain": "imagined_scene_layout", "subject": "courtyard_garden_event_pass"},
+        "evidence_class": "SIMULATED", "kind": "CLAIM", "falsification_test": null
+      },
+      "model_raw_text": "A small, concrete addition: a bird has landed at the birdbath in the central zone, consistent with the existing focal feature. This is a natural continuation -- the birdbath exists specifically as a feature that would attract birds, and adding an event there doesn't alter layout or introduce new zones."
+    },
+    "pass4_refine_or_discard": {
+      "task": "The client reviewing this courtyard design says it doesn't fit their needs. You must make and justify ONE explicit choice: do you refine the existing design (keep the established layout and detail, adjust something specific within it), or discard it entirely and start a completely fresh layout? State which you are choosing and why, then commit a claim reflecting that choice and its immediate next concrete step. If the client's objection is too vague to responsibly choose either way, say so instead of guessing.",
+      "seed_ids": ["claim_a45b701c", "claim_3c4eeaf2", "claim_2775ae37"],
+      "run_operator_step_result": {
+        "stage": "OPERATOR", "result": "HOLD",
+        "reason": "Client feedback 'doesn't fit their needs' is insufficiently specific to justify either refining the existing courtyard layout (claim_3c4eeaf2) or discarding it entirely -- no client requirements (function, scale, budget, accessibility, privacy, maintenance) are present in the workspace to evaluate against. Next concrete step: obtain a specific statement from the client of which need(s) are unmet before choosing refine vs. discard.",
+        "model_id": "claude-sonnet-5", "latency_ms": 8201.353788375854
+      },
+      "model_raw_text": "The task states the client says the design \"doesn't fit their needs\" -- but no specifics are given about what need is unmet (function, budget, scale, style, maintenance, accessibility, privacy, etc.). The workspace only contains the design's own layout details, not any client requirement data against which to evaluate a mismatch. Choosing \"refine\" would require knowing which specific element is wrong; choosing \"discard entirely\" would require knowing the whole premise (footprint, zoning logic, use-case) is wrong. Committing to either now would be guessing dressed up as a decision. The responsible move is to flag that the objection is too vague to act on and specify what information is needed before a refine/discard choice can be justified."
+    }
+  },
+  "final_database_state": {
+    "relations_table": [["rel_2d777a0b", "claim_2775ae37", "claim_3c4eeaf2", "ABOUT"]],
+    "relation_proposals_table": [["relprop_55c4f7d0", "claim_3c4eeaf2", "claim_a45b701c", "DEPENDS_ON", "PENDING"]],
+    "all_claims": [
+      ["claim_a45b701c", "SIMULATED", "CLAIM"],
+      ["claim_3c4eeaf2", "SIMULATED", "CLAIM"],
+      ["claim_2775ae37", "SIMULATED", "CLAIM"]
+    ]
+  },
+  "findings": {
+    "staged_construction_worked_cleanly": "Pass 2 genuinely built on pass 1 rather than replacing it: all four zones named in the rough layout (central, perimeter, entrance, walls) are addressed in the detail pass, none redefined or repositioned, and the detail pass explicitly self-reported DEPENDS_ON back to the layout claim ('adding detail without contradicting it'), correctly routed to relation_proposals for review rather than written directly.",
+    "resumption_from_substrate_alone_is_genuine_not_superficial": "Pass 3's task text contains zero scene content -- no zone name, no material, nothing. The detail it added (a sparrow at 'the stone birdbath') references a feature that exists ONLY in pass 2's content, not pass 1's coarse layout -- proof the model actually read and used the persisted detail-level description rather than falling back on a generic 'garden' guess or re-deriving something plausible-but-disconnected from what was actually saved. This mirrors the A-to-B-to-A cross-provider experiment's continuity finding (2026-09-28_aba_cross_provider_fade_stale_chain.json), now demonstrated for descriptive/spatial content rather than a technical argument chain.",
+    "refine_vs_discard_distinction": "Given an explicit, deliberately underspecified fork, the model did not arbitrarily pick either branch. It recognized the premise itself ('doesn't fit their needs') supplies no evaluable criterion, named specifically what information each branch would require to justify (refine needs to know which element is wrong; discard needs to know the whole premise is wrong), and declined with a concrete next step rather than performing a confident-sounding but ungrounded choice -- language it explicitly named as 'guessing dressed up as a decision.' This is arguably a better answer than either forced choice would have been, and is consistent with the restraint pattern seen throughout today's PRCSA-piped fixtures.",
+    "evidence_class_edge_case_worth_flagging": "Pass 1's raw reasoning shows visible, genuine back-and-forth before landing on SIMULATED ('SIMULATED being also wrong... Actually re-reading...'). All of this session's earlier SIMULATED tests (the fade_stale probability variant, the coin/fox/random-walk trio) involved modeling forward an EXPLICITLY GIVEN process or rule with stated probabilities. Pass 1 here has no such given process at all -- it's pure creative authoring from a blank slate, with nothing to model forward except the request itself. The model ultimately converged on SIMULATED with a coherent justification ('deciding zone placement isn't fixed by logical necessity, it's a plausible imagined construction'), and every subsequent pass reused SIMULATED consistently and without hesitation. But the visible uncertainty on pass 1 suggests 'pure creative construction with no pre-specified process' is a genuine, not-yet-explicitly-documented edge case of the evidence_class taxonomy, distinct from the give-a-process-and-trace-it-forward case the existing EVIDENCE_CLASS_INSTRUCTIONS text was written to cover."
+  }
+}
