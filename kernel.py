@@ -226,6 +226,20 @@ class PRCSAKernel:
             if not isinstance(evidence_class, str) or evidence_class not in VALID_EVIDENCE:
                 raise ValidationError(f"CANDIDATE: bad evidence_class {evidence_class!r} (type={type(evidence_class).__name__})")
 
+            # A model occasionally returns falsification_test as a list (e.g.
+            # several distinct falsification methods) instead of a single
+            # string. That's a real, well-intentioned answer shaped wrong for
+            # this column -- found live when GPT did exactly this and the
+            # unchecked value hit a raw SQLite bind, crashing the whole
+            # run_operator_step call with an opaque sqlite3.ProgrammingError
+            # instead of a clean, typed rejection. Reject it here instead,
+            # before it ever reaches the database.
+            if falsification_test is not None and not isinstance(falsification_test, str):
+                raise ValidationError(
+                    f"CANDIDATE: falsification_test must be a string or null, got "
+                    f"{falsification_test!r} (type={type(falsification_test).__name__})"
+                )
+
             # REAL now REQUIRES supporting_events -- adopted from Grok's
             # review. This is a real structural improvement, not just a
             # patch: it closes part of the "SIM labeled REAL with no
